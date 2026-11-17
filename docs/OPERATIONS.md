@@ -5,7 +5,7 @@
 |---|---|---|---|
 | `ci.yml`, job **test** | PR to `main` (opened/sync/reopen/labelled/unlabelled), push to `main`, manual | `contents: read` | `npm ci`, installs Playwright Chromium, `validate-docs.js` (with `--base` and `DAILY_UPDATE` on PRs), `tests/unit.js`, `tests/run.js`. Uploads `artifacts/` (screenshots, balance report) |
 | `ci.yml`, job **deploy** | after **test** succeeds, only on `main` (push or manual dispatch) | `pages: write`, `id-token: write` | Copies `index.html`, `css/`, `src/`, `assets/` to `_site`, then upload-pages-artifact, deploy-pages, and a live check that the deployed changelog has the new version |
-| `automerge.yml` | `workflow_run` of CI completed | `contents: write`, `pull-requests: write`, `actions: write` | Squash-merges the open, same-repo PR labelled `daily-update` whose head SHA is the one that just passed, after re-checking protected paths. Then dispatches `ci.yml` on `main` (a merge made with `GITHUB_TOKEN` doesn't trigger push workflows) |
+| `automerge.yml` | `workflow_run` of CI completed | `contents: write`, `pull-requests: write`, `actions: write` | Squash-merges the open, same-repo PR labelled `daily-update` whose head SHA is the one that just passed, after re-checking protected paths. Then deletes the `daily/*` branch and dispatches `ci.yml` on `main` (a merge made with `GITHUB_TOKEN` triggers neither push workflows nor delete-branch-on-merge) |
 | `expire-sessions.yml` | daily 03:23 UTC, manual (dry-run option) | `contents: write` | Runs `scripts/expire-sessions.js --apply`, verifies only deletions inside `docs/sessions/`, commits and pushes to `main` |
 
 ## Auto-merge security model

@@ -33,8 +33,9 @@ jobs:
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
         run: |
           set -euo pipefail
-          PR=$(gh pr list --repo "$REPO" --state open --label daily-update --base main --json number,headRefOid,isCrossRepository,isDraft \
-                 --jq "[.[] | select(.headRefOid == \"$HEAD_SHA\" and .isCrossRepository == false and .isDraft == false)][0].number // empty")
+          MATCH=$(gh pr list --repo "$REPO" --state open --label daily-update --base main --json number,headRefName,headRefOid,isCrossRepository,isDraft \
+                 --jq "[.[] | select(.headRefOid == \"$HEAD_SHA\" and .isCrossRepository == false and .isDraft == false)][0] // empty | \"\\(.number) \\(.headRefName)\"")
+          PR=${MATCH%% *}; BRANCH=${MATCH#* }
           if [ -z "$PR" ]; then echo "No open same-repo daily-update PR at $HEAD_SHA; nothing to do."; exit 0; fi
           echo "Candidate PR #$PR at $HEAD_SHA"
           BAD=$(gh pr view "$PR" --repo "$REPO" --json files --jq '.files[].path' \
@@ -45,5 +46,7 @@ jobs:
             exit 1
           fi
           gh pr merge "$PR" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA"
+          # merges made with GITHUB_TOKEN don't trigger delete-branch-on-merge, so delete daily/* branches explicitly
+          if [[ "$BRANCH" =~ ^daily/[A-Za-z0-9._/-]+$ ]]; then gh api -X DELETE "repos/$REPO/git/refs/heads/$BRANCH" || echo "branch delete failed (non-fatal)"; fi
           echo "Merged PR #$PR. Dispatching CI on main to test + deploy."
           gh workflow run ci.yml --repo "$REPO" --ref main
