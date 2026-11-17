@@ -43,4 +43,5 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 - [ ] **R32 [qol] Statistics page v2**: per-gun kills, boss times and run history (warps 1).
 
 ## Shipped
+- [x] **F01 Fix: reset no longer marks patch notes unread** (first pipeline check of auto-merge) (v1.0.1, 2026-11-17)
 - [x] **R00 Launch as INFINITE VOID**: data-driven registries, gates, patch notes, CI guardrails, auto-deploy (v1.0.0, 2026-11-17)

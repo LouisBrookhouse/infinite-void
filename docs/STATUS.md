@@ -1,10 +1,11 @@
 # Status
 
-_Last updated: 2026-11-17 (v1.0.0, initial setup)_
+_Last updated: 2026-11-17 (v1.0.1)_
 
 ## Live
-- **Version:** 1.0.0. See `src/content/changelog.js` or the in-game patch notes.
+- **Version:** 1.0.1. See `src/content/changelog.js` or the in-game patch notes.
 - **URL:** https://louisbrookhouse.github.io/infinite-void/ (deployed by `.github/workflows/ci.yml` on push to `main`).
+- **Live-verified 2026-11-17:** v1.0.0 returned HTTP 200 with zero console errors in headless Chrome, and gameplay rendered (CI run 44069366381: test and deploy green, deploy live-check passed).
 - **Content:** 7 guns, 10 enemy types, 5 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 1 skin, 1 feature flag (secondary slot), 0 missions.
 
 ## Automation

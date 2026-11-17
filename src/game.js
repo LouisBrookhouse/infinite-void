@@ -767,7 +767,7 @@ function openNotes(){
  modal('PATCH NOTES',html,[{t:'CLOSE'}]);S.seenVersion=VERSION;save(true);refreshStore();
 }
 $('#importBtn').addEventListener('click',openImport);
-function doReset(){noSave=true;lsDel(KEY);lsDel(KEY+'_bak');noSave=false;S=fresh();resetRun();toast('PROGRESS RESET');save();}
+function doReset(){noSave=true;lsDel(KEY);lsDel(KEY+'_bak');noSave=false;S=fresh();S.seenVersion=VERSION;resetRun();toast('PROGRESS RESET');save();}
 function resetRun(){recalc();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.dead=false;G.pb=[];G.eb=[];G.caps=[];G.droneT=[];G.captured=0;G.overT=0;G.wT={pri:0,sec:0};G.buckets=[];G.sector=-1;startWave();refreshStore();}
 function askWarp(){const g=dmGain();if(g<=0)return;modal('WARP JUMP?','Reset credits, upgrades, gun levels and waves for <b style="color:#ff5ccf">+'+fmt(g)+' Dark Matter</b>. Unlocked guns are kept.',[{t:'CANCEL'},{t:'JUMP',cls:'warpbtn',fn:doWarp}]);}
 function doWarp(){const g=dmGain();if(g<=0)return;const prev=storeCtx();S.dm+=g;S.dmTotal+=g;S.warps++;S.credits=0;UPG.forEach(u=>S.u[u.id]=0);WEAP.forEach(w=>{if(S.wl[w.id]>1)S.wl[w.id]=1;});
