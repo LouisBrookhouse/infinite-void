@@ -18,6 +18,15 @@ You maintain **INFINITE VOID**, a zero-build static browser game hosted on GitHu
 8. **Validate locally**: `npm test` must pass (validator + unit + browser suites).
 9. **Open a PR** from a branch named `daily/YYYY-MM-DD-<slug>` into `main`, labelled **`daily-update`**, with the title `Daily: <version> <short title>`. The body covers what was added, the gate, the balance before and after, and the tests run. CI runs the tests, and the auto-merge workflow squash-merges and deploys when they pass. Don't merge it yourself.
 
+## Endless run and boss tiers
+The game has **no final boss and no end state**. Clearing the hardest current encounter continues the run. Future daily updates may add bosses of any tier, including more mega bosses, and sectors past 10. Do not treat the latest set-piece as the end of the game.
+
+Boss registry field `tier` (see DESIGN.md):
+- `standard` (tier 1): the every-5-waves rotation. Append these at the end of that list.
+- `elite` (tier 2): sector or set-piece bosses. Not part of the standard rotation. None are live yet.
+- `mega` (tier 3): multi-phase, multi-wave encounters, gated by sector or warp. THE MAW is the first. A clear pays a once-per-run bounty and the next wave starts.
+Higher tiers can be added later. A missing `tier` counts as `standard`.
+
 ## Hard rules
 - **Never push to `main` directly**, and never force-push or rewrite history.
 - **Never weaken tests or guardrails to get green.** Daily-update PRs may not modify `.github/`, `scripts/`, `tests/` (adding new files under `tests/fixtures/` is allowed), `package.json`, `package-lock.json` or this file. CI rejects them. If a guardrail is truly wrong, open a separate PR *without* the `daily-update` label, explain why with sim evidence, and leave it for the owner.

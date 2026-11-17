@@ -5,6 +5,8 @@ durable_promoted: true
 ---
 # Maw tentacle redraw
 
+> As of v1.1.4, THE MAW is a mega boss and clearing it continues the run. This note is the record of the day it shipped. See DESIGN.md.
+
 ## Intent
 R33a. Replace the thin wire tentacles with thick organic curves that match the owner's size sketch. HP, phases, gates, attacks and early-wave balance stay as shipped in 1.1.0.
 

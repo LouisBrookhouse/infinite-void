@@ -3,6 +3,18 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.1.4',date:'2026-11-17',title:'MEGA BOSS',
+  added:[
+   'THE MAW is a mega boss. After phase 5 the run continues into the next wave.',
+   'Clearing it still grants the Eidolon skin once, plus a Dark Matter and credit bounty once per run.',
+  ],
+  balance:[
+   'The Maw bounty is paid directly. It is not a Warp Jump, and a later warp pays the normal amount only.',
+  ],
+  fixed:[
+   'Clearing THE MAW no longer warps you out of the run.',
+  ],
+  gate:'Sector 10 (wave 91). The bounty is once per run. Waves continue past 95.'},
  {version:'1.1.3',date:'2026-11-17',title:'EMERGENCY WARP',
   added:[
    'A hull breach is now an emergency Warp Jump. You keep the Dark Matter a normal warp would have paid.',
