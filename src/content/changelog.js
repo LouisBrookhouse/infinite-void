@@ -3,6 +3,15 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.1.1',date:'2026-11-17',title:'MAW TENTACLES',
+  added:[],
+  balance:[
+   'No stat changes. The Maw fight is the same length and the same health.',
+  ],
+  fixed:[
+   'THE MAW now has thick tapering tentacles on a screen-filling body, instead of thin wires.',
+  ],
+  gate:'Sector 10 (wave 91).'},
  {version:'1.1.0',date:'2026-11-17',title:'THE MAW',
   added:[
    'THE MAW, a five-phase final boss, waits at Sector 10 wave 1. Break its tentacles, then the eye.',

@@ -71,7 +71,7 @@ The core is armored while the current phase still has living tentacles (`bodyMul
 | 4 | 94 | 6 fast tentacles, about 4.2-4.4×eHP | Faster tip fans, fighter minions, slams |
 | 5 | 95 | 4 tentacles, 4.2 or 4.6×eHP, then the core at 16×eHP | Spinning bullet ring, tip bolts. Core death ends the fight |
 
-Tentacles are jointed segments, pooled on the boss. Each has its own HP bar. Severing one flings the segments, shakes the screen and pops debris. Idle contact damage is the tip only; a slam hits along the arm. Enemy bullets during the fight are pooled and capped.
+Tentacles are jointed segments, pooled on the boss. Each has its own HP bar. They are drawn as thick tapering curves on one screen-filling silhouette: a mantle across the top of the playfield, outer limbs framing the side edges, and the other limbs hanging in the gaps. Phase 4 uses all six of those curves. Fewer phases use a subset, with the same hit points as before. A severed tentacle leaves a stump and the broken length tumbles away in one piece. Idle contact damage is the tip only; a slam hits along the arm. Enemy bullets during the fight are pooled and capped.
 
 On the kill: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidolon`), a short victory plays, then the existing Warp Jump runs. The bounty is `max(15, floor(normal Dark Matter × 0.5))` added to the normal gain. Later runs can fight the Maw again. The skin is not granted twice. Reset All locks it again.
 
