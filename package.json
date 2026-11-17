@@ -1,8 +1,8 @@
 {
   "name": "infinite-void",
-  "version": "1.0.0",
+  "version": "0.0.0",
   "private": true,
-  "description": "INFINITE VOID - pixel-art idle space shooter. Zero-build static site, updated daily.",
+  "description": "INFINITE VOID - pixel-art idle space shooter. Zero-build static site, updated daily. The game version lives in src/content/changelog.js.",
   "scripts": {
     "test": "node scripts/validate-docs.js && node tests/unit.js && node tests/run.js",
     "test:browser": "node tests/run.js",

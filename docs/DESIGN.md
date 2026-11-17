@@ -38,7 +38,7 @@ Guideline: new **combat content** goes where the current content runs out (waves
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
 
-- **changelog.js**: newest first, `{version, date, title, added[], balance[], fixed[]?, gate?}`. The top entry is the game version, and `package.json` must match.
+- **changelog.js**: newest first, `{version, date, title, added[], balance[], fixed[]?, gate?}`. The top entry is the game version (the only place it lives).
 - **sectors.js**: `{id, name, unlock:{sector:n}, scheme:{X,Y}, bg, planet:[3], bias:{enemyId:mult}}`. Position must equal its sector number. The list cycles after the last entry.
 - **skins.js**: `{id, name, unlock, half:[rows]}`. Only the first is used until the skin selector ships.
 - **icons.js**: `id -> [rows]`. `ship` and `drone` are special icons.

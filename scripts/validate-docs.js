@@ -43,7 +43,6 @@ changelog.forEach((e,i)=>{
 });
 const today=new Date(Date.now()+86400000).toISOString().slice(0,10);
 if(changelog[0]&&changelog[0].date>today)err('changelog top entry is dated in the future');
-if(exists('package.json')&&changelog[0]){const pv=JSON.parse(rd('package.json')).version;if(pv!==changelog[0].version)err(`package.json version ${pv} must match changelog top version ${changelog[0].version}`);}
 
 /* 4. session notes */
 const SECRET=/(gh[pousr]_[A-Za-z0-9]{20,}|github_pat_[A-Za-z0-9_]{20,}|AKIA[0-9A-Z]{16}|xox[abpr]-[A-Za-z0-9-]{10,}|-----BEGIN [A-Z ]*PRIVATE KEY-----|sk-[A-Za-z0-9]{32,})/;
