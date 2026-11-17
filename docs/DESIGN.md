@@ -32,7 +32,7 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Xeno Biomech (25), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
 | sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
-| future | Missions, more skins (R13), sector modifiers and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
+| future | Missions, more skins (R13), sector modifiers, meta threats (wave 100 and deeper), and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
 
 Guideline: new **combat content** goes where the current content runs out (waves 25-60, sectors 3-6). New **meta systems** gate on `warps` so the first run stays simple. A capstone the owner asks for can sit past the stall (THE MAW at sector 10). It still needs a gate a fresh save cannot open.
 
@@ -46,7 +46,7 @@ Each file in `src/content/` documents its fields in a header comment. Summary:
 - **upgrades.js**: credit upgrades `{id, name, desc, icon, base, g, max?, req?, unlock, show(stats, level)}`, with effects in `calcStats()`. Dark Matter `{id, icon, name, desc, base, g, max?, unlock, show(level)}`.
 - **guns.js**: `{id, name, desc, icon, R, rm, cost, unlock, proj(m), fire(A,g), sfx(A), draw?, charge?, sfxGap?}`. The engine derives per-shot damage from `R/rm/proj`, so total DPS is comparable across guns.
 - **enemies.js**: `{id, name, threat?, unlock, weight, late?, squad?, big?, hp, rew, dmg, spd, fire, shots, ai, shield?, sprite, init?, update?}`. Built-in `ai`: roam, dive, march, kami, rock, sniper, cloak. Use `custom` plus `update(e,dt,A)` for new behaviours.
-- **bosses.js**: `{id, name, tier, unlock (wave multiple of 5), hp, body, escorts, palette?, half, setup(e,A), update(e,dt,A), draw?(e,A,ctx), phaseLock?, fromWave?, phases?}`. `tier` is `standard`, `elite`, or `mega` (higher tiers can be added later). A missing tier counts as `standard`. The every-5 rotation cycles through **standard** bosses whose gate is open at the current wave, in list order. Elite and mega bosses are not in that rotation. **Append new standard bosses at the end** so existing waves keep their bosses. Parts may be `{kind:'limb'}` or `{kind:'core'}` as well as weak, wall and block. `phaseLock` skips the automatic 50% enrage. A mega boss sets `fromWave` and `phases` for the waves it occupies.
+- **bosses.js**: `{id, name, tier, unlock (wave multiple of 5), hp, body, escorts, palette?, half, setup(e,A), update(e,dt,A), draw?(e,A,ctx), phaseLock?, fromWave?, phases?}`. `tier` is `standard`, `elite`, `mega`, or `meta` (the list stays open). A missing tier counts as `standard`. The every-5 rotation cycles through **standard** bosses whose gate is open at the current wave, in list order. Elite, mega, and meta bosses are not in that rotation. **Append new standard bosses at the end** so existing waves keep their bosses. Parts may be `{kind:'limb'}` or `{kind:'core'}` as well as weak, wall and block. `phaseLock` skips the automatic 50% enrage. A mega boss sets `fromWave` and `phases` for the waves it occupies. A `meta` boss is a meta threat: see "Meta threats". The registry has no `meta` entry yet.
 - **features.js**: mechanic flags `{id, name, desc, unlock, announce?}`, checked in the engine with `feat(id)`.
 - **missions.js**: reserved, and the contract gets fixed by the roadmap item that implements it.
 
@@ -55,7 +55,7 @@ The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, c
 **Save compatibility:** the key is `voidbreaker_save_v1` (legacy name, never change it). New persistent state goes in `fresh()` with a default, and `migrate()` copies known fields and fills the rest. New upgrade, gun and Dark Matter ids get level 0 automatically. `S.skin`, `S.skins` and `S.finalKills` are persistent. `S.finalKills` is the lifetime count of mega-boss clears. The key name stays so old saves load. `S.megaPaid` is 1 after this run has taken a mega-boss bounty. Warp Jump, including a hull breach, clears `megaPaid` and does not clear `finalKills` or owned skins. Reset All does, because it loads `fresh()`.
 
 ## No ending
-The game is endless. There is no final boss and no end state. Waves continue past 95, sectors continue past 10 (sector art cycles after the five pictures that exist), and a later day can add bosses of any tier, including more mega bosses. Do not treat THE MAW, or the latest set-piece, as the last content.
+The game is endless. There is no final boss and no end state. Waves continue past 95, sectors continue past 10 (sector art cycles after the five pictures that exist), and a later day can add bosses of any tier, including more mega bosses and meta threats. Do not treat THE MAW, or the latest set-piece, as the last content.
 
 ## Boss tiers
 Every boss has a `tier` field. The number is the tier; the string is what the registry stores.
@@ -65,8 +65,9 @@ Every boss has a `tier` field. The number is the tier; the string is what the re
 | 1 | `standard` | The every-5-waves rotation. Append new ones at the end of that list. | Dreadnought, Boss Galaga, Mothership, Big Core, Xeno Biomech |
 | 2 | `elite` | A sector or set-piece boss. Not part of the standard rotation. Spawn it from its own gate when that day ships. | None yet |
 | 3 | `mega` | A multi-phase, multi-wave encounter, gated by sector or warp. `fromWave` and `phases` mark the waves it occupies. | THE MAW, waves 91-95 |
+| 4 | `meta` | A meta threat that is a boss. It lives outside the play rect and is damageable only where it intrudes. Not in the rotation. | None yet. Rect Breaker is the first planned one (R35) |
 
-A missing `tier` counts as `standard`, so an old entry still rotates. Elite and mega bosses are left out of `bossFor`. Higher tiers can be added later without an end state. The same boss id is never renamed.
+A missing `tier` counts as `standard`, so an old entry still rotates. Elite, mega, and meta bosses are left out of `bossFor`. The list stays open: a later tier can sit above `meta` without an end state. The same boss id is never renamed. Nothing with `tier:'meta'` is in the registry yet.
 
 ## Mega boss: THE MAW
 Sector 10 wave 1 is wave 91 (`sector = floor((wave-1)/10)+1`). `isMegaWave` is true while a mega boss's `fromWave` span covers the wave. THE MAW (`id: 'maw'`, `tier:'mega'`, `fromWave:91`, `phases:5`) occupies waves 91-95 instead of a normal wave or the rotating boss. The registry gate is `{wave:90, sector:10}`: wave 90 is a multiple of 5, and sector 10 stays closed until wave 91, so the boss is out of the rotation and off a fresh save. Wave 96 is an ordinary wave. Wave 100 is a standard boss again.
@@ -91,7 +92,55 @@ On the clear: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidol
 
 `?mega=1` jumps to the mega boss's `fromWave` (wave 91) and sets `noSave`, so that tab cannot write the save. `?final=1` is the same jump, kept as an alias. `?kit=1` (only together with `?mega=1` or `?final=1`) loads a strong kit and sets `G.debugMul` from `eHP * 24/25` over primary DPS, high enough for that idle kit to finish each Maw phase inside the 90 second clock. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
 
-## Death
+## Meta threats
+A meta threat is defined by how it meets the play area: the rect in the middle of the screen where the game happens. That rect is the game world. A meta threat lives outside it. It arrives from outside the screen boundaries, then acts on the rect. It is not another sprite inside the world.
+
+It can shrink the rect, warp it, crack it, shake it, tilt it, pull on it, or pierce it. It becomes damageable only where it intrudes into the rect. Parts that stay outside the rect are not targets.
+
+The art is eldritch and fifth-dimensional, and it should not match the pixel sprites inside the rect. Impossible geometry, colour inversion, chromatic aberration, and a scale that does not fit in the rect are the tools. A player should read it as not of this game. Inside the rect, the chunky nearest-neighbour look stays.
+
+Meta-tier bosses are meta threats. `tier:'meta'` sits above `mega`. The tier list stays open above that.
+
+### Examples
+**Black Hole** (roadmap R04, Louis's text). A rare event outside the gameplay rectangle. It appears to the left or right of the screen, sucks the enemies of that wave toward it slowly, then disappears. Enemies are drawn toward it and disappear once they fully leave the game area. This is not the R29 Black Hole Bomb gun.
+
+**Rect Breaker** (roadmap R35, placeholder name). A meta-tier boss. It spawns at the top of the game area and shrinks the rect as it appears. From outside the rect it smashes an arm down, hits the rect, and sends shockwaves. It fires beams from its mouth and those beams come through the game rect. The ship beats it by shooting the arms where they hit the rect and linger. The last damage phase is when its head falls into the game rect.
+
+### When they show up in a run
+Not implemented. The suggested roll, once a day ships it:
+
+Roll once at the start of a wave, not every frame.
+
+- If a meta threat is already active, the chance is 0.
+- If this wave is a mega boss and the chosen threat is not marked to overlap one, the chance is 0. None are marked that way yet.
+- Otherwise `p = 0.004` through wave 100. Past wave 100, `p = min(0.02, 0.004 + 0.0002 * (wave - 100))`. That is 0.4% at wave 100, 0.6% at wave 110, 1.4% at wave 150, and a 2% cap from wave 180.
+
+One meta threat at a time. When the roll hits, pick among threats whose gate is open. Suggested weights: Black Hole 8, Rect Breaker 1. A fresh save cannot open either gate.
+
+Suggested gates: Black Hole `{wave:100}` (current wave, so it cannot appear before wave 100 of a run). Rect Breaker `{wave:150, warps:2}`. Both stay closed on a fresh save.
+
+### Shipping cadence
+Meta-threat updates are wild-card days. They add something that is outside the box, literally. They stay rare: about one daily update in ten, and never two meta-threat days in a row. The day is still exactly one small gated update. If the piece is bigger than a day, split it. The first Rect Breaker slice is the play rect as a moving rectangle, with a test that it returns to its rest size, before the creature exists.
+
+On a normal day, if the first unticked roadmap item is tagged `[meta threat]`, skip it and take the next unticked item that is not. A wild-card day is allowed when the previous shipped update was not a meta threat and fewer than about one in ten shipped updates are. The owner can pull one forward.
+
+### For the day that builds it
+The play rect is implicit today: the 180×240 canvas is the world. A meta threat needs room outside that rect.
+
+Two ways to draw it, both fine if the game still runs from `file://` with no new libraries and no network:
+
+- Grow one canvas to the viewport and draw the play rect inset, so a limb can cross the edge in one coordinate space.
+- Keep the 180×240 play canvas and put an overlay canvas or DOM layer around it. Crossing the edge then needs a shared coordinate space.
+
+The rect becomes a value `{x, y, w, h}` that can animate. Gameplay follows it: spawns, collision, bullets, the ship, and the in-rect HUD. The store layout follows the column it already uses. An enemy that leaves the rect has left the world. The Black Hole removes it only once it has fully left.
+
+Shots and taps hit a meta threat only on the part that intersects the rect.
+
+When the event ends, animate the rect back to its rest inset. A test must assert that `x`, `y`, `w`, and `h` match that rest rect afterward.
+
+Mobile already stacks the store under the playfield below 820px (`fit()`). A shrunk or shifted rect must not cover the store, push the hull bar off the rect, or break that stack. The wave and hull readouts stay inside the rect.
+
+Inside the rect, sprites stay hand-authored pixels. The outside layer is the exception to that look.
 A hull breach runs the Warp Jump reset immediately: credits, ship upgrades and gun levels clear, unlocked guns stay, and the next run starts at wave `1 + 5 * Warp Drive`. The banner reads `HULL BREACH - EMERGENCY WARP`, and a toast shows the Dark Matter earned.
 
 The payout is `dmGain()` at that moment, the same number the Warp Jump button would pay, with no Maw bounty added. `dmGain()` is 0 until `maxWave` is at least 20, so an early death pays nothing. A zero payout still resets the run, but it does not increment `S.warps`, so it cannot open warp-gated upgrades. Once `dmGain()` is above 0, the death increments `S.warps` and banks that Dark Matter, then sets `maxWave` back to 0, so a second death cannot farm more than one voluntary warp at the same peak.
