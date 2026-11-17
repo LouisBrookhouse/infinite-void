@@ -2,7 +2,7 @@
 
 How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping. An owner request can pull a later item forward. On 2026-11-17 the owner pulled THE MAW (R33) ahead of R01. R01 stays the next unticked item. R30 Void Leviathan is a different boss.
 
-Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol]**
+Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol] [new ship types]**
 
 ## Sector 3-4 (waves 21-40): where content currently thins out
 - [ ] **R01 [enemy] Mine Layer** (wave 24). Drifts across the top dropping slow proximity mines that explode into an 8-way burst when shot or touched. Inspired by Defender/Gradius. Uses `ai:'custom'`.
@@ -41,6 +41,10 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 - [ ] **R30 [boss] Void Leviathan** (wave 65, appended). A screen-wide multi-segment boss that scrolls through, and each segment is a mini-phase.
 - [ ] **R31 [mechanic] Endless "Rift" mode** (warps 5). An optional side mode with escalating waves and a leaderboard-free personal best.
 - [ ] **R32 [qol] Statistics page v2**: per-gun kills, boss times and run history (warps 1).
+- [ ] **R33 [ship] new ship upgrade page, with modular parts, the player can find blue prints / ship parts when killing bosses.
+- [ ] **R34 [art] new ship skins that can be unlocked via challenges
+
+
 
 ## Shipped
 - [x] **R33b [boss] Maw, wall of flesh** (v1.1.2, 2026-11-17). Four Hungry tentacles, two eyes, a mouth. Guns aim at the live parts. Same HP budget and gates as R33.
