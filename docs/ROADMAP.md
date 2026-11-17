@@ -4,13 +4,14 @@ How to use it: each day the agent takes the **first unticked item** (skipping on
 
 The game does not end. There is no final boss and no end state. Bosses have tiers (standard, elite, mega, and room for more). Future days can add bosses of any tier, including more mega bosses, and sectors past 10. See DESIGN.md.
 
-Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol] [new ship types]**
+Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol] [new ship types] [meta threats]**
 
 ## Sector 3-4 (waves 21-40): where content currently thins out
 - [ ] **R01 [enemy] Mine Layer** (wave 24). Drifts across the top dropping slow proximity mines that explode into an 8-way burst when shot or touched. Inspired by Defender/Gradius. Uses `ai:'custom'`.
 - [ ] **R02 [gun] Option Pods** (wave 26). Gradius "options": 2 trailing orbs that mirror your primary's shots at 40% damage. A new gun-like upgrade that hooks into `shootGun`.
 - [ ] **R03 [art] Sector art: Verdant Belt nebula clouds** (sector 3). Procedural pixel cloud layer parallaxing behind the stars, colour-keyed per sector.
-- [ ] **R04 [enemy] Splitter** (wave 27). A pyramid ship that splits into 3 small fast darts on death (Asteroids-style split, but aimed).
+- [ ] **R04 [enemy] Splitter** (rare event). a meta threat is a rare event that occurs outside the the gameplay rectangle, the first one will be a black hole, that appears to the left or right of the screen, that sucks all enemies of a wave towards it slowly, then disappears. the enemies will be drawn towards it and disappear once they fully leave the game area
+- [ ] **R0X [meta threat] Splitter** (wave 27). A pyramid ship that splits into 3 small fast darts on death (Asteroids-style split, but aimed).
 - [ ] **R05 [upgrade] Afterburner** (wave 28, credits). Raises the ship's tracking speed and dodge, so it moves faster toward targets and away from bullets.
 - [ ] **R06 [boss] Twin Serpent** (wave 30, appended to the rotation). Two segmented worms weaving in sine waves, each head a weak point. Inspired by Life Force.
 - [ ] **R07 [mechanic] Power-up capsule bar** (wave 32). Gradius-style: capsules fill a bar, and tapping the bar spends it on the highlighted buff (speed, missile, shield).
