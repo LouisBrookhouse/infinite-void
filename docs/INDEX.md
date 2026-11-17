@@ -4,7 +4,7 @@
 |---|---|---|
 | [../AGENTS.md](../AGENTS.md) | Standing rules for the daily update agent | Owner-reviewed PRs only |
 | [STATUS.md](STATUS.md) | Current version, what's live, open problems, next actions | Every PR |
-| [DESIGN.md](DESIGN.md) | Pillars, progression-gate ladder, content registry contracts, balance philosophy and guardrails | When a contract or rule changes |
+| [DESIGN.md](DESIGN.md) | Pillars, progression-gate ladder, content registry contracts, boss tiers, meta threats, balance philosophy and guardrails | When a contract or rule changes |
 | [ROADMAP.md](ROADMAP.md) | Ordered backlog of small daily updates. Tick items as they ship | Every daily update |
 | [OPERATIONS.md](OPERATIONS.md) | CI, deploy, auto-merge, session-note expiry, rollback | When workflows change |
 | [sessions/README.md](sessions/README.md) | Session-note rules (7-day expiry) and [template](sessions/TEMPLATE.md) | Rarely |

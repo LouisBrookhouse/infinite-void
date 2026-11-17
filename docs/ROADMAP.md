@@ -1,8 +1,8 @@
 # Roadmap: the daily update backlog
 
-How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping. An owner request can pull a later item forward. On 2026-11-17 the owner pulled THE MAW (R33) ahead of R01. R01 stays the next unticked item. R30 Void Leviathan is a different boss.
+How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping. An owner request can pull a later item forward. On 2026-11-17 the owner pulled THE MAW (R33) ahead of R01. R01 stays the next unticked item. R30 Void Leviathan is a different boss. An item tagged `[meta threat]` is a wild card: on a normal day, skip it and take the next unticked item that is not one. About one day in ten, never two days in a row. See DESIGN.md, "Meta threats".
 
-The game does not end. There is no final boss and no end state. Bosses have tiers (standard, elite, mega, and room for more). Future days can add bosses of any tier, including more mega bosses, and sectors past 10. See DESIGN.md.
+The game does not end. There is no final boss and no end state. Bosses have tiers (standard, elite, mega, meta, and room for more). Future days can add bosses of any tier, including more mega bosses and meta threats, and sectors past 10. See DESIGN.md.
 
 Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol] [new ship types] [meta threats]**
 
@@ -10,8 +10,8 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 - [ ] **R01 [enemy] Mine Layer** (wave 24). Drifts across the top dropping slow proximity mines that explode into an 8-way burst when shot or touched. Inspired by Defender/Gradius. Uses `ai:'custom'`.
 - [ ] **R02 [gun] Option Pods** (wave 26). Gradius "options": 2 trailing orbs that mirror your primary's shots at 40% damage. A new gun-like upgrade that hooks into `shootGun`.
 - [ ] **R03 [art] Sector art: Verdant Belt nebula clouds** (sector 3). Procedural pixel cloud layer parallaxing behind the stars, colour-keyed per sector.
-- [ ] **R04 [enemy] Splitter** (rare event). a meta threat is a rare event that occurs outside the the gameplay rectangle, the first one will be a black hole, that appears to the left or right of the screen, that sucks all enemies of a wave towards it slowly, then disappears. the enemies will be drawn towards it and disappear once they fully leave the game area
-- [ ] **R0X [meta threat] Splitter** (wave 27). A pyramid ship that splits into 3 small fast darts on death (Asteroids-style split, but aimed).
+- [ ] **R04 [meta threat] Black Hole** (rare event, gate wave 100). a meta threat is a rare event that occurs outside the the gameplay rectangle, the first one will be a black hole, that appears to the left or right of the screen, that sucks all enemies of a wave towards it slowly, then disappears. the enemies will be drawn towards it and disappear once they fully leave the game area. Not the R29 gun. Wild card, not a normal day. See DESIGN.md.
+- [ ] **R0X [enemy] Splitter** (wave 27). A pyramid ship that splits into 3 small fast darts on death (Asteroids-style split, but aimed).
 - [ ] **R05 [upgrade] Afterburner** (wave 28, credits). Raises the ship's tracking speed and dodge, so it moves faster toward targets and away from bullets.
 - [ ] **R06 [boss] Twin Serpent** (wave 30, appended to the rotation). Two segmented worms weaving in sine waves, each head a weak point. Inspired by Life Force.
 - [ ] **R07 [mechanic] Power-up capsule bar** (wave 32). Gradius-style: capsules fill a bar, and tapping the bar spends it on the highlighted buff (speed, missile, shield).
@@ -47,6 +47,10 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 - [ ] **R33 [ship] new ship upgrade page, with modular parts, the player can find blue prints / ship parts when killing bosses.
 - [ ] **R34 [art] new ship skins that can be unlocked via challenges
 
+## Meta threats (rare wild cards)
+Skip these on a normal day. About one daily update in ten, and never two days in a row. Still one small gated update on the day that ships one. See DESIGN.md, "Meta threats". R04 above is the Black Hole and stays where the owner wrote it.
+
+- [ ] **R35 [meta threat] [boss] Rect Breaker** (wave 150, warps 2). Placeholder name. A `meta`-tier boss that arrives from outside the play rect. It spawns at the top and shrinks the rect as it appears. From outside the rect it smashes an arm down onto the rect and sends shockwaves. Beams from its mouth come through the rect. The ship shoots the arms where they hit the rect and linger. The last damage phase is its head falling into the rect. Eldritch, not the in-rect pixel style. Not during a mega boss unless a later design says so.
 
 
 ## Shipped

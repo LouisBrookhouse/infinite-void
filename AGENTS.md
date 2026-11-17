@@ -8,9 +8,9 @@ You maintain **INFINITE VOID**, a zero-build static browser game hosted on GitHu
 3. Run `npm ci && npm test` on a fresh branch from `main` to confirm a green baseline. If `main` is red, your whole job today is a fix-only PR (a patch version bump with a `fixed` changelog line), not new content.
 
 ## The daily update: exactly this, nothing more
-1. **Pick ONE item**: the first unticked roadmap item whose prerequisites exist. Keep it small, roughly 20 to 150 lines of real change. If it's bigger, split it on the roadmap and ship the first slice.
+1. **Pick ONE item**: the first unticked roadmap item whose prerequisites exist. Keep it small, roughly 20 to 150 lines of real change. If it's bigger, split it on the roadmap and ship the first slice. If that item is tagged `[meta threat]`, skip it on a normal day and take the next unticked item that is not one. Meta threats are wild-card days (see below).
 2. **Gate it.** Every new content entry needs an `unlock` gate (see DESIGN.md, "Progression gates"). Nothing new may be open on a fresh save. The gating test enforces this. Prefer gates that land just beyond where content currently runs out.
-3. **Implement it data-first.** Add or extend an entry in `src/content/*.js`. Touch `src/game.js` only for a genuinely new mechanic, and then through a small hook (for example `feat('id')`, an `A` API function, or a content callback). Keep the 64-bit-style pixel look: hand-authored pixel rows, the existing palette, no image files unless they're tiny.
+3. **Implement it data-first.** Add or extend an entry in `src/content/*.js`. Touch `src/game.js` only for a genuinely new mechanic, and then through a small hook (for example `feat('id')`, an `A` API function, or a content callback). Keep the 64-bit-style pixel look inside the play rect: hand-authored pixel rows, the existing palette, no image files unless they're tiny. A meta threat is the exception, and only outside the rect (see DESIGN.md, "Meta threats").
 4. **Rebalance.** Run `npm run sim` (the deterministic balance sim, verbose) before and after your change. Make at most a few small, explained numeric tweaks so the game stays inside the guardrail bands in `tests/guardrails.json` and pushes toward the design targets in DESIGN.md. Record the before and after numbers in your session note.
 5. **Changelog.** Prepend ONE entry to `src/content/changelog.js` (bump the minor version, e.g. 1.3.0 to 1.4.0, use today's UTC date, and write `added` and `balance` lines in short player-facing language, plus a `gate` string saying where it unlocks). (The game version lives only in the changelog. `package.json` is protected and has no game version.)
 6. **Docs.** Tick the roadmap item (add the version and date), update `docs/STATUS.md` (version, what's live, any open problems), and update DESIGN.md if you changed a contract or a gate rule.
@@ -25,7 +25,13 @@ Boss registry field `tier` (see DESIGN.md):
 - `standard` (tier 1): the every-5-waves rotation. Append these at the end of that list.
 - `elite` (tier 2): sector or set-piece bosses. Not part of the standard rotation. None are live yet.
 - `mega` (tier 3): multi-phase, multi-wave encounters, gated by sector or warp. THE MAW is the first. A clear pays a once-per-run bounty and the next wave starts.
-Higher tiers can be added later. A missing `tier` counts as `standard`.
+- `meta` (tier 4): a meta threat that is a boss. It lives outside the play rect and can be hit only where it enters the rect. None are live. Rect Breaker (R35) is the first planned one.
+The tier list stays open above `meta`. A missing `tier` counts as `standard`.
+
+## Meta threats
+A meta threat arrives from outside the play rect (the 180×240 world in the middle of the screen) and acts on that rect: shrink, warp, crack, shake, tilt, pull, or pierce. It is damageable only where it intrudes. The look is eldritch and fifth-dimensional, and it should not match the pixel sprites inside the rect. Full rules, the spawn roll, the gates, and the rendering notes are in DESIGN.md, "Meta threats".
+
+Wild-card days only. About one daily update in ten, never two meta-threat days in a row, and still exactly one small gated update that day. If the piece is bigger than a day, split it. The first slice of a meta boss is the rect as a moving rectangle plus a test that it restores, not the whole creature. On a normal day, skip a `[meta threat]` item even when it is the first unticked line. A wild-card day is allowed when the previous shipped update was not a meta threat and fewer than about one in ten shipped updates are. The owner can pull one forward. Gates stay deep (Black Hole at wave 100, Rect Breaker at wave 150 and 2 warps) so a fresh save never sees one.
 
 ## Hard rules
 - **Never push to `main` directly**, and never force-push or rewrite history.
