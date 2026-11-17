@@ -3,6 +3,16 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.1.2',date:'2026-11-17',title:'WALL OF FLESH',
+  added:[],
+  balance:[
+   'The Maw still has the same health across five phases. Early waves are unchanged.',
+  ],
+  fixed:[
+   'Guns, missiles and drones aim at THE MAW\'s tentacles and eyes instead of the armored core.',
+   'THE MAW is a wall of flesh: two bloodshot eyes, a central mouth, and four Hungry tentacles.',
+  ],
+  gate:'Sector 10 (wave 91).'},
  {version:'1.1.1',date:'2026-11-17',title:'MAW TENTACLES',
   added:[],
   balance:[
