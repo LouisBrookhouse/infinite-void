@@ -1,0 +1,49 @@
+name: Auto-merge daily update
+
+# Squash-merges an open PR labelled `daily-update` once CI has succeeded on its exact head commit.
+# Security: no checkout, no PR code executed, same-repo branches only, protected paths re-checked.
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+
+permissions: {}
+
+concurrency:
+  group: automerge
+  cancel-in-progress: false
+
+jobs:
+  merge:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+      pull-requests: write
+      actions: write
+    steps:
+      - name: Find, verify and merge
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPO: ${{ github.repository }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          PR=$(gh pr list --repo "$REPO" --state open --label daily-update --base main --json number,headRefOid,isCrossRepository,isDraft \
+                 --jq "[.[] | select(.headRefOid == \"$HEAD_SHA\" and .isCrossRepository == false and .isDraft == false)][0].number // empty")
+          if [ -z "$PR" ]; then echo "No open same-repo daily-update PR at $HEAD_SHA; nothing to do."; exit 0; fi
+          echo "Candidate PR #$PR at $HEAD_SHA"
+          BAD=$(gh pr view "$PR" --repo "$REPO" --json files --jq '.files[].path' \
+                 | grep -E '^(\.github/|scripts/|tests/|package\.json$|package-lock\.json$|AGENTS\.md$)' | grep -vE '^tests/fixtures/' || true)
+          if [ -n "$BAD" ]; then
+            echo "::error::PR #$PR touches protected paths; leaving it for the owner:"; echo "$BAD"
+            gh pr comment "$PR" --repo "$REPO" --body "Auto-merge skipped: daily updates may not modify CI, tests, guardrails, scripts or AGENTS.md. Changed protected paths: $(echo $BAD | tr '\n' ' ')"
+            exit 1
+          fi
+          gh pr merge "$PR" --repo "$REPO" --squash --match-head-commit "$HEAD_SHA"
+          echo "Merged PR #$PR. Dispatching CI on main to test + deploy."
+          gh workflow run ci.yml --repo "$REPO" --ref main

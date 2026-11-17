@@ -1,0 +1,42 @@
+{
+ "v": 1,
+ "credits": 4321,
+ "wave": 9,
+ "maxWave": 8,
+ "best": 9,
+ "kills": 0,
+ "waveKills": 0,
+ "dm": 3,
+ "dmTotal": 5,
+ "warps": 1,
+ "u": {
+  "dmg": 7,
+  "hull": 4,
+  "click": 0,
+  "rate": 0,
+  "credit": 0,
+  "crit": 0,
+  "regen": 0,
+  "multi": 0,
+  "drone": 0,
+  "droneDmg": 0,
+  "shield": 0
+ },
+ "d": {
+  "over": 2,
+  "salv": 0,
+  "nano": 0,
+  "quantum": 0,
+  "warp": 0,
+  "idle": 0
+ },
+ "auto": true,
+ "muted": false,
+ "totalCredits": 0,
+ "playTime": 6.533000000000023,
+ "cps": 0,
+ "bossKills": 0,
+ "deaths": 0,
+ "buyMode": 1,
+ "last": 1794912437742
+}

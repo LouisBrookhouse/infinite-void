@@ -1,0 +1,20 @@
+/* STORE ICONS (left half, mirrored). Keyed by icon id. 'ship' and 'drone' are special-cased to the ship/drone sprite. */
+Object.assign(IV.content.icons,{
+ dmg:["...w","..wy","..yy","..yy","..yy","..oo",".o.r","...r"],
+ rate:["...c","..cw",".c.c","c...","...c","..cw",".c.c","c..."],
+ click:["...r","...r",".rr.","r...","rr.w","r...",".rr.","...r"],
+ credit:["..yy",".yoo","yoyy","yoyw","yoyw","yoyy",".yoo","..yy"],
+ crit:["...y","...y","..yy","yyyw",".yyy","..yy",".y.y","y..."],
+ regen:["....","..ll","..ll","llll","llww","..ll","..ll","...."],
+ multi:["c..w","c..c","c..c",".c.c",".c.c","..cc","...c","...."],
+ droneDmg:["....",".ggg",".gll","gglw",".gll",".ggg","....","...."],
+ shield:["..cc",".c..","c...","c..w","c...","c...",".c..","..cc"],
+ warp:["..mm",".m..","m.pp","m.p.","m.p.","m..m",".m..","..mm"],
+ idle:["...g",".g.g","..gg","ggdd","..dw","ggdd","..gg",".g.g"],
+ twin:["r...","w...","r...","r...","....","..cc",".cww","cbbw"],
+ spread:["o..o",".o.o","..oo","...y","....","..cc",".cww","cbbw"],
+ homing:["...r","..gw","..gg","..gg","..gg",".ggg","o.go",".o.o"],
+ laser:["..cw","..cw","..cw","..cw","..cw","..cw","..cw","..cw"],
+ ring:["..mm",".m..","m..p","m.pw","m..p",".m..","..mm","...."],
+ wave:["..cc",".cww","cwww","cwwy","cwww",".cww","..cc","...."],
+});

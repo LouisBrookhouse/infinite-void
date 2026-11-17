@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<title>INFINITE VOID // Idle Space Battler</title>
+<meta name="description" content="INFINITE VOID: a pixel-art idle space shooter that gets a new update every day.">
+<link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+ <div id="gameCol">
+  <div id="topbar">
+   <div class="title">INFINITE VOID</div>
+   <button class="pbtn vbtn" id="notesBtn" title="Patch notes">v</button>
+   <div class="res">
+    <div><span class="cr" id="crv">¢0</span> <span class="cps" id="cpsv">+0/s</span></div>
+    <div class="dmv" id="dmv" title="Dark Matter"></div>
+    <span class="saveind" id="saveInd" title="Progress is saved in this browser">✔ SAVED</span>
+    <button class="pbtn on" id="autoBtn" title="Auto-advance to next wave">AUTO</button>
+    <button class="pbtn" id="muteBtn" title="Toggle sound (M)">SND ON</button>
+   </div>
+  </div>
+  <div id="stage"><canvas id="game"></canvas><div id="toast"></div></div>
+ </div>
+ <div id="store">
+  <div id="tabs">
+   <button class="tab active" data-tab="up">SHIP</button>
+   <button class="tab" data-tab="guns">GUNS <span class="badge" id="gunBadge"></span></button>
+   <button class="tab" data-tab="warp">WARP <span class="badge" id="warpBadge"></span></button>
+   <button class="tab" data-tab="stats">SAVE/STATS</button>
+  </div>
+  <div id="buyMode">BUY:
+   <button class="pbtn sel" data-m="1">x1</button>
+   <button class="pbtn" data-m="10">x10</button>
+   <button class="pbtn" data-m="max">MAX</button>
+  </div>
+  <div class="pane" id="pane-up"><div id="upList"></div><div class="hint">TAP ENEMIES FOR BONUS DAMAGE. HIT GLOWING WEAK POINTS ON BOSSES.</div></div>
+  <div class="pane hidden" id="pane-guns">
+   <div class="slot"><div>PRIMARY<b id="slotPri">-</b></div><div>SECONDARY<b id="slotSec">-</b></div></div>
+   <div id="gunList"></div>
+   <div class="hint">UNLOCKED GUNS SURVIVE WARP JUMPS. SECONDARY FIRES AT 50% RATE.</div>
+  </div>
+  <div class="pane hidden" id="pane-warp">
+   <div class="box" id="warpBox"></div>
+   <div id="dmList"></div>
+  </div>
+  <div class="pane hidden" id="pane-stats">
+   <div class="box">
+    <h4>SAVE DATA</h4>
+    <div id="storeStatus" style="font-size:11px"></div>
+    <button class="pbtn big" id="saveBtn">SAVE NOW</button>
+    <div class="row2"><button class="pbtn big" id="exportBtn">EXPORT</button><button class="pbtn big" id="importBtn">IMPORT</button></div>
+    <div class="hint">EXPORT GIVES A CODE + .JSON FILE YOU CAN LOAD IN ANY BROWSER OR COPY OF THE GAME</div>
+   </div>
+   <div class="box"><table class="stats" id="statTable"></table></div>
+   <div class="box"><button class="pbtn big danger" id="resetBtn">RESET ALL PROGRESS</button></div>
+  </div>
+ </div>
+</div>
+<div id="modal" class="hidden"><div class="mbox"><div id="mTitle"></div><div id="mBody"></div><div id="mBtns"></div></div></div>
+<input type="file" id="fileIn" accept=".json,.txt,application/json,text/plain" style="display:none">
+<!-- Load order matters: core, then content registries, then the engine. Add new content files before src/game.js. -->
+<script src="src/core.js"></script>
+<script src="src/content/changelog.js"></script>
+<script src="src/content/sectors.js"></script>
+<script src="src/content/skins.js"></script>
+<script src="src/content/icons.js"></script>
+<script src="src/content/upgrades.js"></script>
+<script src="src/content/guns.js"></script>
+<script src="src/content/enemies.js"></script>
+<script src="src/content/bosses.js"></script>
+<script src="src/content/features.js"></script>
+<script src="src/content/missions.js"></script>
+<script src="src/game.js"></script>
+</body>
+</html>

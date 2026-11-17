@@ -1,0 +1,100 @@
+name: CI
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened, labeled, unlabeled, ready_for_review]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  test:
+    name: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npx playwright install --with-deps chromium
+      - name: Docs, changelog, session notes & PR policy
+        env:
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          DAILY_UPDATE: ${{ github.event_name == 'pull_request' && contains(github.event.pull_request.labels.*.name, 'daily-update') }}
+        run: |
+          if [ -n "$BASE_SHA" ]; then node scripts/validate-docs.js --base "$BASE_SHA"; else node scripts/validate-docs.js; fi
+      - name: Unit tests
+        run: node tests/unit.js
+      - name: Browser tests (smoke, save, migration, gating, balance)
+        run: node tests/run.js
+      - name: Balance summary
+        if: always()
+        run: |
+          if [ -f artifacts/balance-report.json ]; then
+            node -e "const r=require('./artifacts/balance-report.json');const rows=r.minutes.filter(m=>m.windowed||String(m.min).startsWith('warp+10'));console.log('| min | wave | onScreen | TTK s | gun |\n|---|---|---|---|---|\n'+rows.map(m=>'| '+[m.min,m.wave,m.onScreenAvg,m.focusTTK,m.gun].join(' | ')+' |').join('\n')+'\n\nidle best wave: '+(r.idle&&r.idle.best)+(r.fails&&r.fails.length?'\n\n**Guardrail failures:**\n- '+r.fails.join('\n- '):''))" >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - uses: actions/upload-artifact@v7
+        if: always()
+        with:
+          name: test-artifacts
+          path: artifacts/
+          if-no-files-found: ignore
+          retention-days: 14
+
+  deploy:
+    name: deploy
+    needs: test
+    if: github.ref == 'refs/heads/main' && (github.event_name == 'push' || github.event_name == 'workflow_dispatch')
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Assemble static site
+        run: |
+          mkdir _site
+          cp -r index.html css src assets _site/
+          touch _site/.nojekyll
+          node -e "const IV={content:{changelog:[]}};require('vm').runInNewContext(require('fs').readFileSync('src/content/changelog.js','utf8'),{IV});console.log('VERSION='+IV.content.changelog[0].version)" >> "$GITHUB_ENV"
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: _site
+      - id: deployment
+        uses: actions/deploy-pages@v5
+      - name: Verify live site serves this version
+        env:
+          URL: ${{ steps.deployment.outputs.page_url }}
+        run: |
+          for i in $(seq 1 20); do
+            if curl -fsSL "${URL}src/content/changelog.js?nocache=$(date +%s)" | grep -q "version:'${VERSION}'"; then
+              curl -fsSL "${URL}" | grep -q "INFINITE VOID" && echo "live: ${URL} (v${VERSION})" && exit 0
+            fi
+            echo "waiting for CDN ($i)..."; sleep 15
+          done
+          echo "::error::live site did not serve v${VERSION} within 5 minutes"; exit 1

@@ -1,0 +1,60 @@
+{
+ "game": "VOID BREAKER",
+ "v": 2,
+ "exported": "2026-11-16T18:43:25.128Z",
+ "code": "VB2:eyJ2IjoyLCJjcmVkaXRzIjoxMjM0LCJ3YXZlIjo3LCJtYXhXYXZlIjo2LCJiZXN0Ijo3LCJraWxscyI6NTAsIndhdmVLaWxscyI6MCwiZG0iOjAsImRtVG90YWwiOjAsIndhcnBzIjowLCJ1Ijp7ImRtZyI6NSwiaHVsbCI6MywiY2xpY2siOjEsInJhdGUiOjIsImNyZWRpdCI6MSwiY3JpdCI6MSwicmVnZW4iOjAsIm11bHRpIjoxLCJkcm9uZSI6MCwiZHJvbmVEbWciOjAsInNoaWVsZCI6MH0sImQiOnsib3ZlciI6MCwic2FsdiI6MCwibmFubyI6MCwicXVhbnR1bSI6MCwid2FycCI6MCwiaWRsZSI6MH0sIndsIjp7InB1bHNlIjoxLCJ0d2luIjowLCJzcHJlYWQiOjAsImhvbWluZyI6MCwibGFzZXIiOjAsInJpbmciOjAsIndhdmUiOjB9LCJwcmkiOiJwdWxzZSIsInNlYyI6IiIsImF1dG8iOnRydWUsIm11dGVkIjpmYWxzZSwidG90YWxDcmVkaXRzIjo1MDAwLCJwbGF5VGltZSI6MzAwLjYwNTksImNwcyI6MywiYm9zc0tpbGxzIjoxLCJkZWF0aHMiOjAsImJ1eU1vZGUiOjEsImxhc3QiOjE3OTQ4NTQ2MDUxMjgsImNyZWF0ZWQiOjE3OTQ4NTQ2MDQ1MTh9",
+ "save": {
+  "v": 2,
+  "credits": 1234,
+  "wave": 7,
+  "maxWave": 6,
+  "best": 7,
+  "kills": 50,
+  "waveKills": 0,
+  "dm": 0,
+  "dmTotal": 0,
+  "warps": 0,
+  "u": {
+   "dmg": 5,
+   "hull": 3,
+   "click": 1,
+   "rate": 2,
+   "credit": 1,
+   "crit": 1,
+   "regen": 0,
+   "multi": 1,
+   "drone": 0,
+   "droneDmg": 0,
+   "shield": 0
+  },
+  "d": {
+   "over": 0,
+   "salv": 0,
+   "nano": 0,
+   "quantum": 0,
+   "warp": 0,
+   "idle": 0
+  },
+  "wl": {
+   "pulse": 1,
+   "twin": 0,
+   "spread": 0,
+   "homing": 0,
+   "laser": 0,
+   "ring": 0,
+   "wave": 0
+  },
+  "pri": "pulse",
+  "sec": "",
+  "auto": true,
+  "muted": false,
+  "totalCredits": 5000,
+  "playTime": 300.6059,
+  "cps": 3,
+  "bossKills": 1,
+  "deaths": 0,
+  "buyMode": 1,
+  "last": 1794854605128,
+  "created": 1794854604518
+ }
+}

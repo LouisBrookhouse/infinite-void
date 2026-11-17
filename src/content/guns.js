@@ -1,0 +1,37 @@
+/* GUNS. Contract: {id, name, desc, icon, R (damage mult), rm (fire-rate mult), cost (unlock price),
+ *   unlock (gate vs BEST wave), proj(multiLevel) -> projectile count,
+ *   fire(A, g) spawns bullets: g = {x, y, n (proj count), m (SPREAD ARRAY level), push(bullet)},
+ *   sfx(A) plays its sound}.
+ * Bullet fields: x,y,vx,vy,k (draw kind: pulse|twin|spread|missile|laser|ring|wave or any id drawn by `draw`),
+ *   pierce (bool, needs hits:new Set()), homing, r (radius). Optional draw(A, ctx, bullet, x, y) for custom kinds.
+ * Per-shot damage is computed by the engine from R/rm/proj so DPS stays comparable across guns. */
+IV.content.guns.push(
+ {id:'pulse',icon:'dmg',name:'PULSE BLASTER',desc:'Standard issue bolts',R:1,rm:1,cost:0,unlock:{wave:1},
+  proj:m=>1+m,
+  fire(A,g){for(let i=0;i<g.n;i++){const a=(i-(g.n-1)/2)*0.13;g.push({x:g.x+(i-(g.n-1)/2)*2,y:g.y,vx:Math.sin(a)*220,vy:-Math.cos(a)*220,k:'pulse'});}},
+  sfx(A){A.tone(A.rnd(820,920),0.05,'square',0.03,0.5);}},
+ {id:'twin',icon:'twin',name:'DUAL FIGHTER',desc:'Galaga-style twin shot',R:1.1,rm:1.2,cost:150,unlock:{wave:3},
+  proj:m=>2+m,
+  fire(A,g){for(let i=0;i<g.n;i++){const o=i-(g.n-1)/2,a=o*0.04;g.push({x:g.x+o*4,y:g.y+Math.abs(o),vx:Math.sin(a)*240,vy:-Math.cos(a)*240,k:'twin'});}},
+  sfx(A){A.tone(1150,0.04,'square',0.025,0.6);A.tone(1250,0.04,'square',0.025,0.6,0.03);}},
+ {id:'spread',icon:'spread',name:'SPREAD GUN',desc:'Contra-style 5-way fan',R:1.2,rm:0.85,cost:600,unlock:{wave:6},
+  proj:m=>5+2*m,
+  fire(A,g){for(let i=0;i<g.n;i++){const a=(i-(g.n-1)/2)*(0.95/(g.n-1));g.push({x:g.x,y:g.y,vx:Math.sin(a)*170,vy:-Math.cos(a)*170,k:'spread'});}},
+  sfx(A){A.tone(420,0.07,'square',0.035,0.5);A.noise(0.05,0.05,3000);}},
+ {id:'homing',icon:'homing',name:'HOMING MISSILES',desc:'Heat-seekers, never miss',R:1.1,rm:0.55,cost:2000,unlock:{wave:9},
+  proj:m=>2+m,
+  fire(A,g){for(let i=0;i<g.n;i++){const side=i%2?1:-1;g.push({x:g.x+side*4,y:g.y+4,vx:side*A.rnd(50,80),vy:A.rnd(-50,-20),k:'missile',homing:1,t:0,r:1});}},
+  sfx(A){A.noise(0.18,0.07,2500,'bandpass');A.tone(300,0.15,'sawtooth',0.02,2);}},
+ {id:'laser',icon:'laser',name:'LASER',desc:'Gradius beam, pierces all',R:1.05,rm:2.6,cost:6000,unlock:{wave:13},
+  proj:m=>1+m,
+  fire(A,g){for(let i=0;i<g.n;i++)g.push({x:g.x+(i-(g.n-1)/2)*3,y:g.y-4,vx:0,vy:-330,k:'laser',pierce:1,hits:new Set()});},
+  sfx(A){A.tone(1900,0.06,'sine',0.04,0.6);},sfxGap:0.07},
+ {id:'ring',icon:'ring',name:'RING LASER',desc:'Expanding piercing rings',R:1.0,rm:0.7,cost:18000,unlock:{wave:17},
+  proj:()=>1,
+  fire(A,g){g.push({x:g.x,y:g.y,vx:0,vy:-120,k:'ring',pierce:1,hits:new Set(),r:2,rmax:12+g.m*2});},
+  sfx(A){A.tone(500,0.18,'triangle',0.06,2.4);}},
+ {id:'wave',icon:'wave',name:'WAVE CANNON',desc:'R-Type charge beam, pierces',R:1.3,rm:0.35,cost:50000,unlock:{wave:21},charge:true,
+  proj:()=>1,
+  fire(A,g){g.push({x:g.x,y:g.y-3,vx:0,vy:-210,k:'wave',pierce:1,hits:new Set(),r:4+g.m,t:0});A.G.shake=Math.max(A.G.shake,2);},
+  sfx(A){A.noise(0.5,0.25,1800);A.tone(220,0.45,'sawtooth',0.1,0.25);A.tone(880,0.3,'square',0.04,0.3);}}
+);

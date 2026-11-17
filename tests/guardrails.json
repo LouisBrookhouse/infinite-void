@@ -1,0 +1,42 @@
+{
+  "_comment": "Balance guardrail bands for the balance suite in tests/run.js. Deterministic seeded sim (seed below, real-time loop frozen, audio muted): greedy-buying bot tapping 8x/s, in-game minutes. onScreenAvg and focusTTK are averaged over the 3 minutes ending at each checkpoint. Baseline at v1.0.0 (2026-11-17): min5 wave 19 / onScreen 11.8 / TTK 0.90s; min15 wave 34 / 18.2 / 1.65s; min30 wave 45 / 16.1 / 3.36s; warp +13 DM; idle best wave 10 at 15 min. Daily updates must NOT edit this file (CI blocks it on daily-update PRs): fix the balance instead, or propose band changes in a separate PR for the owner to review.",
+  "seed": 1337,
+  "taps": 8,
+  "checkpoints": [
+    {
+      "min": 5,
+      "waveMin": 12,
+      "waveMax": 28,
+      "onScreenAvgMin": 8,
+      "focusTTKMin": 0.4,
+      "focusTTKMax": 6
+    },
+    {
+      "min": 15,
+      "waveMin": 24,
+      "waveMax": 44,
+      "onScreenAvgMin": 11,
+      "focusTTKMin": 0.8,
+      "focusTTKMax": 10
+    },
+    {
+      "min": 30,
+      "waveMin": 34,
+      "waveMax": 58,
+      "onScreenAvgMin": 12,
+      "focusTTKMin": 1.2,
+      "focusTTKMax": 15
+    }
+  ],
+  "maxWaveGainPerMinuteAfter3": 6,
+  "warpAvailableByMin": 30,
+  "postWarp": {
+    "minutes": 10,
+    "minFractionOfPreWarpBest": 0.8
+  },
+  "idle": {
+    "minutes": 15,
+    "taps": 0,
+    "waveMin": 6
+  }
+}
