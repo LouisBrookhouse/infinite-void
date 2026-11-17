@@ -3,6 +3,12 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.0.1',date:'2026-11-17',title:'FIRST AUTOMATIC UPDATE',
+  added:[],
+  balance:[],
+  fixed:[
+   'Resetting all progress no longer flags the patch notes as unread.',
+  ]},
  {version:'1.0.0',date:'2026-11-17',title:'INFINITE VOID LAUNCHES',
   added:[
    'VOID BREAKER is now INFINITE VOID, live on the web. Your old save code still imports.',

@@ -2,6 +2,7 @@
 created: 2026-11-17T10:54:46Z
 intent: Bootstrap INFINITE VOID as a data-driven static site with CI, Pages deploy, daily auto-merge and agent docs
 durable_promoted: true
+updated: 2026-11-17T10:58:57Z
 ---
 # Launch setup (v1.0.0)
 
@@ -22,7 +23,10 @@ In: restructure into registries, gates, patch notes, rename, CI, deploy, auto-me
 ## Validation
 - Local (box, Chrome): `npm test`: validator ok, 8 unit tests, browser suites smoke, save, migration, gating and balance all passed.
 - Balance baseline (seed 1337, 8 taps/s): min5 wave 19, onScreen 11.8, TTK 0.90s. min15 wave 34 / 18.2 / 1.65s. min30 wave 45 / 16.1 / 3.36s. Warp +13 DM. Idle best wave 10 at 15 min.
-- CI and live-site results are recorded in STATUS.md after the first deploy.
+- CI run 44069366381 (push to main, commit 8e65d81): test and deploy both green, and the deploy live-check saw v1.0.0. CI Chromium's balance numbers differ slightly from local Chrome (min15 wave 32 vs 34) but sit inside the bands. Treat CI as the reference.
+- Live check 2026-11-17: https://louisbrookhouse.github.io/infinite-void/ returned 200 with zero console errors, and gameplay rendered (screenshot kept on the box, not in the repo).
+- Follow-up commit 0784abb: `package.json` no longer carries the game version, because daily PRs can't touch `package.json`.
+- v1.0.1 (this PR, label `daily-update`): a one-line fix (reset no longer flags the patch notes unread). It exercises the auto-merge, then dispatch, then deploy path end to end.
 
 ## Open items
 - Branch protection on `main` not configured (recorded in STATUS.md).
