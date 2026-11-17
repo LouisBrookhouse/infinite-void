@@ -68,6 +68,10 @@ table.stats td:last-child{text-align:right;color:var(--yellow)}
 #toast{position:absolute;left:50%;top:12px;transform:translateX(-50%);background:var(--panel);color:var(--yellow);padding:8px 12px;font-size:12px;box-shadow:0 0 0 3px var(--line);opacity:0;transition:opacity .3s;pointer-events:none;z-index:5;white-space:nowrap}
 #toast.show{opacity:1}
 .hint{font-size:11px;color:var(--dim);text-align:center;padding:4px}
+.skins{display:flex;flex-wrap:wrap;gap:6px}
+.skinbtn{padding:6px 8px;background:#0a0f26;color:var(--dim);font-size:11px;box-shadow:inset 0 0 0 2px #24336e}
+.skinbtn.on{color:var(--green);box-shadow:inset 0 0 0 2px #23805a}
+.skinbtn:disabled{opacity:.5;cursor:not-allowed}
 .slot{display:flex;gap:6px;margin-bottom:8px}
 .slot div{flex:1;background:#0a0f26;padding:6px;font-size:11px;box-shadow:inset 0 0 0 2px #24336e;color:var(--dim)}
 .slot b{color:var(--green);display:block;font-size:12px}
