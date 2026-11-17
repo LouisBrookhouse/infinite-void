@@ -401,7 +401,7 @@ function findHit(e,b){
 }
 function applyHit(e,where,dmg,canCrit,hx,hy){
  let crit=false;if(canCrit&&Math.random()<G.s.crit){dmg*=3;crit=true;}
- if(where&&where.kind==='limb'){const L=e.limbs&&e.limbs[where.li];if(!L||L.hp<=0)return 'miss';hurtLimb(e,L,dmg,false);return 'hit';}
+ if(where&&where.kind==='limb'){const L=e.limbs&&e.limbs[where.li];if(!L||L.hp<=0)return 'miss';L.flashSi=where.si|0;hurtLimb(e,L,dmg,false);return 'hit';}
  if(where==='body'||(where&&where.kind==='core')){
   const m=e.bodyMult!=null?e.bodyMult:1;
   if(m<=0){if(G.t-(e.armAt||0)>0.4){e.armAt=G.t;addText('ARMORED',e.x,e.y-10,'#7383bb');SFX.tink();}return 'armor';}

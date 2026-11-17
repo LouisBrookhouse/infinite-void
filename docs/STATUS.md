@@ -1,19 +1,18 @@
 # Status
 
-_Last updated: 2026-11-17 (v1.1.0 implemented, v1.0.1 live)_
+_Last updated: 2026-11-17 (v1.1.1 tentacle art on this branch, v1.1.0 on main)_
 
 ## Version state
-- **Implemented:** 1.1.0 THE MAW, on `daily/2026-11-17-final-boss`. Five-phase final boss at waves 91-95, Eidolon skin, auto Warp Jump with a Dark Matter bounty. See [DESIGN.md](DESIGN.md) for the contract.
-- **Tested:** local `npm test` and `npm run sim` on 2026-11-17, plus a headless Chromium pass of all 5 phases. Exact commands and numbers are in [sessions/2026-11-17-final-boss.md](sessions/2026-11-17-final-boss.md).
-- **Merged:** not merged. The branch is pushed. Opening the pull request failed: GitHub returned "must be a collaborator". No `daily-update` PR exists yet, so auto-merge has nothing to merge.
-- **Live:** 1.0.1 at https://louisbrookhouse.github.io/infinite-void/ until that PR merges and the deploy job finishes.
+- **Implemented:** 1.1.1 on `daily/2026-11-17-maw-tentacles`. Visual pass only: thick tapering Maw tentacles. HP, phases, gates and early-wave numbers are unchanged.
+- **Tested:** `npm test` on this branch, plus a headless Chromium pass of all 5 phases and fresh screenshots. See [sessions/2026-11-17-maw-tentacles.md](sessions/2026-11-17-maw-tentacles.md).
+- **Merged:** 1.1.0 THE MAW is on `main` (PR #2, squash-merged). 1.1.1 is not merged. This session does not open the PR.
+- **Live:** follows the Pages deploy of `main`. 1.1.1 is not live until that PR merges and the deploy job finishes.
 
 ## Live
-- **Version:** 1.0.1. The in-game patch notes and `src/content/changelog.js` on `main` are still 1.0.1 until deploy.
+- **Version on main:** 1.1.0. This branch prepends 1.1.1 in `src/content/changelog.js`.
 - **URL:** https://louisbrookhouse.github.io/infinite-void/ (deployed by `.github/workflows/ci.yml` on push to `main`).
 - **Live-verified 2026-11-17:** v1.0.0 returned HTTP 200 with zero console errors in headless Chrome, and gameplay rendered (CI run 44069366381: test and deploy green, deploy live-check passed). v1.1.0 is not on the live site yet.
-- **Content on main:** 7 guns, 10 enemy types, 5 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 1 skin, 1 feature flag (secondary slot), 0 missions.
-- **Content in 1.1.0 (this branch):** same, plus THE MAW (6 bosses) and Eidolon (2 skins). A SAVE/STATS skin picker equips owned skins. R13 still adds two more skins.
+- **Content on main:** 7 guns, 10 enemy types, 6 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. 1.1.1 changes no counts.
 
 ## Automation
 - CI (`test` job): docs/session-note/policy validator, unit tests, Playwright suites (smoke, save, migration, gating, balance guardrails).
