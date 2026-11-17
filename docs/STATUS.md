@@ -5,7 +5,7 @@ _Last updated: 2026-11-17 (v1.1.0 implemented, v1.0.1 live)_
 ## Version state
 - **Implemented:** 1.1.0 THE MAW, on `daily/2026-11-17-final-boss`. Five-phase final boss at waves 91-95, Eidolon skin, auto Warp Jump with a Dark Matter bounty. See [DESIGN.md](DESIGN.md) for the contract.
 - **Tested:** local `npm test` and `npm run sim` on 2026-11-17, plus a headless Chromium pass of all 5 phases. Exact commands and numbers are in [sessions/2026-11-17-final-boss.md](sessions/2026-11-17-final-boss.md).
-- **Merged:** not merged. The daily-update PR is left for the auto-merge workflow. This session does not merge.
+- **Merged:** not merged. The branch is pushed. Opening the pull request failed: GitHub returned "must be a collaborator". No `daily-update` PR exists yet, so auto-merge has nothing to merge.
 - **Live:** 1.0.1 at https://louisbrookhouse.github.io/infinite-void/ until that PR merges and the deploy job finishes.
 
 ## Live

@@ -33,4 +33,6 @@ None that are not already in STATUS.md or ROADMAP.md. Live stays 1.0.1 until aut
 Roadmap R01 Mine Layer. Do not retune THE MAW unless a player report or a sim that actually reaches sector 10 says the clock or the HP is wrong.
 
 ## Links
-Branch `daily/2026-11-17-final-boss`. PR title `Daily: 1.1.0 THE MAW`. DESIGN.md section "Final boss: THE MAW".
+Branch `daily/2026-11-17-final-boss`, commit `77c0cb1`, pushed to origin. DESIGN.md section "Final boss: THE MAW".
+The PR tool returned GitHub "must be a collaborator" and did not open the pull request. Compare URL: https://github.com/LouisBrookhouse/infinite-void/compare/main...daily/2026-11-17-final-boss?expand=1
+Intended title: `Daily: 1.1.0 THE MAW`. Intended label: `daily-update`.
