@@ -92,7 +92,7 @@ function feat(id){return !!FMAP[id]&&open(FMAP[id].unlock);}
 /* KEY kept from the VOID BREAKER era so existing saves keep loading. Never change it. */
 const KEY='voidbreaker_save_v1',SAVE_VER=2;
 function fresh(){const u={},d={},wl={},skins={};UPG.forEach(x=>u[x.id]=0);DMU.forEach(x=>d[x.id]=0);WEAP.forEach(x=>wl[x.id]=0);C.skins.forEach((x,i)=>skins[x.id]=i?0:1);wl.pulse=1;
- return {v:SAVE_VER,credits:0,wave:1,maxWave:0,best:1,kills:0,waveKills:0,dm:0,dmTotal:0,warps:0,u,d,wl,skins,skin:C.skins[0].id,finalKills:0,pri:'pulse',sec:'',auto:true,muted:false,totalCredits:0,playTime:0,cps:0,bossKills:0,deaths:0,buyMode:1,seenVersion:'',last:Date.now(),created:Date.now()};}
+ return {v:SAVE_VER,credits:0,wave:1,maxWave:0,best:1,kills:0,waveKills:0,dm:0,dmTotal:0,warps:0,u,d,wl,skins,skin:C.skins[0].id,finalKills:0,megaPaid:0,pri:'pulse',sec:'',auto:true,muted:false,totalCredits:0,playTime:0,cps:0,bossKills:0,deaths:0,buyMode:1,seenVersion:'',last:Date.now(),created:Date.now()};}
 let S=fresh();
 function migrate(o){
  if(!o||typeof o!=='object'||Array.isArray(o))throw new Error('not a save');
@@ -113,7 +113,8 @@ function migrate(o){
  if(!f.skins||typeof f.skins!=='object')f.skins={};
  if(!(f.skins.vanguard>=1))f.skins.vanguard=1;
  if(!(f.skins[f.skin]>=1))f.skin=C.skins[0].id;
- f.finalKills=Math.max(0,Math.floor(f.finalKills)||0);
+ f.finalKills=Math.max(0,Math.floor(f.finalKills)||0); // lifetime mega-boss clears; key kept so old saves load
+ f.megaPaid=f.megaPaid>=1?1:0;
  return f;
 }
 let storageOK=true,memStore={};
@@ -177,7 +178,7 @@ const dmGain=()=>S.maxWave>=20?Math.floor(1+Math.pow((S.maxWave-20)/4,1.4)):0;
 /* ---------- runtime ---------- */
 const G={s:null,enemies:[],pb:[],eb:[],parts:[],texts:[],stars:[],caps:[],banner:null,shake:0,flash:0,warpFx:0,
  p:{x:W/2,y:H-30,hull:20,shield:0,shieldDelay:0,flash:0},wT:{pri:0,sec:0},dead:false,respawnT:0,need:8,toSpawn:0,spawnT:0,isBoss:false,bossAlive:false,boss:null,bossT:35,escortT:3,
- droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,hiddenAt:0,debugMul:1,final:false,finale:null};
+ droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,hiddenAt:0,debugMul:1,mega:false,megaHold:null};
 for(let i=0;i<70;i++){const l=i%3;G.stars.push({x:Math.random()*W,y:Math.random()*H,l,v:[5,13,30][l],c:['#2a3a7a','#7383bb','#ffffff'][l]});}
 function recalc(){G.s=calcStats();}
 
@@ -277,13 +278,16 @@ const bossSprCache={};
 function bossSpr(b){const sch=sectorOf(S.wave)%SCHEMES.length,k=b.id+sch;
  if(!bossSprCache[k]){const sc=SCHEMES[sch];let map={};if(b.palette==='scheme')map=sc;else if(b.palette)for(const c in b.palette){const v=b.palette[c];map[c]=v==='X'||v==='Y'?sc[v]:v;}
   bossSprCache[k]=makeSprite(mirror(b.half),map);}return bossSprCache[k];}
-function bossFor(w){const ctx=waveCtx(w),av=BOSSES.filter(b=>!b.final&&IV.gateOpen(b.unlock,ctx)),list=av.length?av:BOSSES.filter(b=>!b.final);return list[(Math.floor(w/5)-1)%list.length];}
-function isFinalWave(w){return w>=91&&w<=95;}
+function bossTier(b){return (b&&b.tier)||'standard';}
+function bossFor(w){const ctx=waveCtx(w),rot=b=>bossTier(b)==='standard',av=BOSSES.filter(b=>rot(b)&&IV.gateOpen(b.unlock,ctx)),list=av.length?av:BOSSES.filter(rot);return list[(Math.floor(w/5)-1)%list.length];}
+function megaDef(w){for(const b of BOSSES){if(bossTier(b)!=='mega')continue;const a=b.fromWave|0,n=b.phases|0||1;if(w>=a&&w<a+n)return b;}return null;}
+function isMegaWave(w){return !!megaDef(w);}
+function megaPhaseText(w){const b=megaDef(w),n=b?w-(b.fromWave|0)+1:1,p=b?(b.phases|0||1):1;return 'MEGA BOSS - PHASE '+n+'/'+p;}
 function spawnBoss(def){
  const spr=bossSpr(def),sc=2,hp=eHP(S.wave)*def.hp;
  const e={type:'boss',boss:true,bid:def.id,def,name:def.name,T:BOSS_T,ai:'boss',spr,sc,w:spr.w*sc,h:spr.h*sc,x:W/2,y:-spr.h*sc,tx:W/2,ty:42,hp,maxHp:hp,sh:0,maxSh:0,flash:0,
   phase:1,a1:2,a2:4,a3:0,ang:0,counts:true,dead:false,bodyMult:def.body,parts:[],beam:0,beamCD:6,dirx:1,cloak:0,rew:1};
- if(def.final)e.form=S.wave-90;
+ if(bossTier(def)==='mega')e.form=S.wave-(def.fromWave|0)+1;
  if(def.setup)def.setup(e,A);
  G.enemies.push(e);G.boss=e;G.bossAlive=true;return e;
 }
@@ -293,7 +297,7 @@ function pushEB(x,y,vx,vy,dmg,k){const b=EBPOOL.pop()||{};b.x=x;b.y=y;b.vx=vx;b.
 function freeEB(b){EBPOOL.push(b);}
 function rmEB(i){const b=G.eb[i],n=G.eb.length-1;if(i!==n)G.eb[i]=G.eb[n];G.eb.pop();freeEB(b);}
 function clearEB(){while(G.eb.length)freeEB(G.eb.pop());}
-function bossFire(e,ang,sp,kind,dmgM,ox,oy){if(G.final&&G.eb.length>180)return;pushEB(e.x+(ox||0),e.y+(oy!=null?oy:e.h/2-4),Math.cos(ang)*sp,Math.sin(ang)*sp,eDmg(S.wave)*1.4*(dmgM||1),kind||'orb');}
+function bossFire(e,ang,sp,kind,dmgM,ox,oy){if(G.mega&&G.eb.length>180)return;pushEB(e.x+(ox||0),e.y+(oy!=null?oy:e.h/2-4),Math.cos(ang)*sp,Math.sin(ang)*sp,eDmg(S.wave)*1.4*(dmgM||1),kind||'orb');}
 function flingLimb(e,L){
  if(!L||L.flung)return;L.flung=1;
  for(const s of L.segs||[]){s.vx=rnd(-2.2,2.2);s.vy=rnd(-1.4,2.2);}
@@ -310,7 +314,8 @@ function hurtLimb(e,L,dmg,quiet){
  if(L.hp<=0){L.hp=0;flingLimb(e,L);}else if(!quiet)SFX.hit();
 }
 function nextPhase(e){
- if(!e||!e.def||!e.def.final||e._phasing||(e.form|0)>=5)return;
+ const n=(e&&e.def&&e.def.phases)|0||5;
+ if(!e||!e.def||bossTier(e.def)!=='mega'||e._phasing||(e.form|0)>=n)return;
  e._phasing=true;
  S.maxWave=Math.max(S.maxWave,S.wave);
  const prev=storeCtx(),prevBest=S.best;
@@ -320,21 +325,29 @@ function nextPhase(e){
  for(const o of G.enemies)if(o!==e)o.dead=true;
  clearEB();SFX.roar();
  banner(['','','HUNGRY REGROW','THE EYES OPEN','WALL LUNGES','MOUTH OPENS'][e.form]||('PHASE '+e.form),'#ff5ccf',1.7);
- toast('FINAL BOSS - PHASE '+e.form+'/5');
+ toast(megaPhaseText(S.wave));
  if(e.def.setup)e.def.setup(e,A);
  e._phasing=false;
 }
-function finishFinal(){
+function megaReward(){return {dm:Math.max(15,Math.floor(dmGain()*0.5)),credits:Math.floor(eRew(S.wave)*20)};}
+function finishMega(){
  S.maxWave=Math.max(S.maxWave,S.wave);
  S.finalKills=(S.finalKills|0)+1;
- if(S.skins&&!(S.skins.eidolon>=1)){S.skins.eidolon=1;toast('NEW SHIP SKIN: EIDOLON');}
- const bonus=Math.max(15,Math.floor(dmGain()*0.5));
- G.finale={t:3.1,bonus};
+ const skinNew=!!(S.skins&&!(S.skins.eidolon>=1));
+ if(skinNew)S.skins.eidolon=1;
+ let paid=null;
+ if(!(S.megaPaid>=1)){S.megaPaid=1;paid=megaReward();S.dm+=paid.dm;S.dmTotal+=paid.dm;addCredits(paid.credits);recalc();}
+ G.megaHold={t:2.2};
  for(const o of G.enemies)o.dead=true;
  clearEB();
  for(let i=0;i<5;i++)explode(rnd(24,W-24),rnd(16,90),2,'#b14aed');
  G.flash=1;G.shake=14;SFX.roar();
- banner('MAW FALLS','#ffe066',2.4);
+ banner('MAW FALLS','#ffe066',2.2);
+ let msg='';
+ if(skinNew)msg='EIDOLON UNLOCKED';
+ if(paid)msg=(msg?msg+'  ':'')+'+'+fmt(paid.dm)+' DM  +¢'+fmt(paid.credits);
+ if(msg)toast(msg);
+ save();
 }
 function aimAt(x,y){return Math.atan2(G.p.y-y,G.p.x-x);}
 function updateBoss(e,dt){
@@ -354,10 +367,10 @@ const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossF
 function startWave(){
  for(const e of G.enemies){if(!e.dead)explode(e.x,e.y,1);e.dead=true;}
  G.enemies=[];clearEB();G.marches=[];S.waveKills=0;
- G.final=isFinalWave(S.wave);G.isBoss=G.final||S.wave%5===0;G.boss=null;
- G.need=G.isBoss?1:needOf(S.wave);G.toSpawn=G.need;G.spawnT=G.final?0.35:1;G.bossT=G.final?90:35;G.bossAlive=false;G.escortT=4;
+ G.mega=isMegaWave(S.wave);G.isBoss=G.mega||S.wave%5===0;G.boss=null;
+ G.need=G.isBoss?1:needOf(S.wave);G.toSpawn=G.need;G.spawnT=G.mega?0.35:1;G.bossT=G.mega?90:35;G.bossAlive=false;G.escortT=4;
  const sec=sectorOf(S.wave);if(sec!==G.sector){G.sector=sec;G.planet=makePlanet(sec);}
- if(G.final){banner('FINAL BOSS','#ff4d5e',2.2);SFX.alarm();toast('FINAL BOSS - PHASE '+(S.wave-90)+'/5');}
+ if(G.mega){banner('MEGA BOSS','#ff4d5e',2.2);SFX.alarm();toast(megaPhaseText(S.wave));}
  else if(G.isBoss){banner('WARNING: '+bossFor(S.wave).name,'#ff4d5e',2.2);SFX.alarm();}
  else{banner('WAVE '+S.wave,'#7fe7ff',1.3);const nt=C.enemies.find(t=>t.threat&&t.unlock.wave===S.wave);if(nt)setTimeout(()=>toast('NEW THREAT: '+nt.threat),400);}
 }
@@ -371,13 +384,13 @@ function notifyUnlocks(prev){
 function waveClear(){
  S.maxWave=Math.max(S.maxWave,S.wave);
  const prev=storeCtx(),prevBest=S.best;
- if(S.auto){S.wave++;if((S.wave-1)%10===0&&!isFinalWave(S.wave)){const k=sectorOf(S.wave),sc=SECTORS[k%SECTORS.length];setTimeout(()=>toast('SECTOR '+(k+1)+': '+sc.name),900);}}
+ if(S.auto){S.wave++;if((S.wave-1)%10===0&&!isMegaWave(S.wave)){const k=sectorOf(S.wave),sc=SECTORS[k%SECTORS.length];setTimeout(()=>toast('SECTOR '+(k+1)+': '+sc.name),900);}}
  S.best=Math.max(S.best,S.wave);
  if(S.best>prevBest){notifyUnlocks(prev);if(prevBest<20&&S.best>=20)toast('WARP JUMP UNLOCKED!');}
  SFX.wave();startWave();
  if(Date.now()-lastSaveAt>3000)save(true);
 }
-function failWave(msg){G.esc=G.esc||{};G.esc[msg]=(G.esc[msg]||0)+1;if(!isFinalWave(S.wave))S.wave=Math.max(1,S.wave-1);releaseCaptured(false);startWave();G.banner={t:2.2,max:2.2,txt:msg,c:'#ff9f1c'};}
+function failWave(msg){G.esc=G.esc||{};G.esc[msg]=(G.esc[msg]||0)+1;if(!isMegaWave(S.wave))S.wave=Math.max(1,S.wave-1);releaseCaptured(false);startWave();G.banner={t:2.2,max:2.2,txt:msg,c:'#ff9f1c'};}
 function releaseCaptured(rescued){if(G.captured>0&&rescued)addText('DRONE RESCUED!',G.p.x,G.p.y-20,'#6bff8a',true);G.captured=0;}
 function addCredits(n){S.credits+=n;S.totalCredits+=n;G.bucketCur+=n;}
 
@@ -456,7 +469,7 @@ function killEnemy(e){
  if(e.ai==='rock'&&e.size>1){for(const d of [-1,1]){const c=mkEnemy(e.type,{size:e.size-1,counts:false,hpMul:e.size===3?0.6:0.3,x:e.x+d*3,y:e.y,vx:d*rnd(25,45),vy:rnd(-15,15)});c.state='drift';}}
  if(big||Math.random()<0.03)dropCap(e.x,e.y,big?2:1);
  if(e.counts){S.kills++;S.waveKills++;}
- if(big){S.bossKills++;G.bossAlive=false;releaseCaptured(true);if(e.def&&e.def.final){finishFinal();return;}waveClear();}
+ if(big){S.bossKills++;G.bossAlive=false;releaseCaptured(true);if(e.def&&bossTier(e.def)==='mega'){finishMega();return;}waveClear();}
  else if(!G.isBoss&&e.counts&&S.waveKills>=G.need)waveClear();
 }
 /* power capsules (Gradius-style) */
@@ -466,7 +479,7 @@ function collectCap(c){const P=G.p,s=G.s;SFX.power();addText(CAPS[c.k].name+'!',
  if(c.k==='P')G.overT=10;
  if(c.k==='R'){P.hull=Math.min(s.maxHull,P.hull+s.maxHull*0.35);P.shield=s.shieldMax;}
  if(c.k==='B'){G.flash=0.8;G.shake=6;SFX.big();for(const b of G.eb)addPart(b.x,b.y,0,0,0.3,'#ff5ccf',1);clearEB();
-  for(const e of G.enemies.slice()){if(e.dead)continue;if(e.def&&e.def.final){if(e.limbs)for(const L of e.limbs)hurtLimb(e,L,s.dmg*8,true);if(e.form===5||e.coreOpen)dmgEnemy(e,s.dmg*8,false,null);}else dmgEnemy(e,s.dmg*10*(e.boss?0.5:1),false,null);}G.enemies=G.enemies.filter(e=>!e.dead);}
+  for(const e of G.enemies.slice()){if(e.dead)continue;if(e.def&&bossTier(e.def)==='mega'){if(e.limbs)for(const L of e.limbs)hurtLimb(e,L,s.dmg*8,true);if(e.form===5||e.coreOpen)dmgEnemy(e,s.dmg*8,false,null);}else dmgEnemy(e,s.dmg*10*(e.boss?0.5:1),false,null);}G.enemies=G.enemies.filter(e=>!e.dead);}
 }
 
 /* ---------- enemy fire & player damage ---------- */
@@ -477,7 +490,7 @@ function enemyFire(e){
  for(let i=0;i<n;i++){const a=base+(i-(n-1)/2)*0.22;pushEB(e.x,e.y+e.h/2-2,Math.cos(a)*sp,Math.sin(a)*sp,dmg,'orb');}
 }
 function damagePlayer(d){
- const P=G.p;if(G.dead||G.finale||G.dying)return;
+ const P=G.p;if(G.dead||G.megaHold||G.dying)return;
  if(P.shield>0){const a=Math.min(P.shield,d);P.shield-=a;d-=a;sparks(P.x,P.y-4,'#7fe7ff',4);}
  P.shieldDelay=3;
  if(d>0){P.hull-=d;P.flash=0.12;G.shake=Math.max(G.shake,2);SFX.hurt();addText('-'+fmt(d),P.x,P.y-10,'#ff4d5e');}
@@ -487,7 +500,7 @@ function die(){
  if(G.dying||G.justWarped)return;
  const P=G.p;G.dying=true;P.hull=0;S.deaths++;
  explode(P.x,P.y,5,'#7fe7ff');G.shake=10;G.flash=0.5;SFX.big();clearEB();G.pb.length=0;
- releaseCaptured(false);G.finale=null;
+ releaseCaptured(false);G.megaHold=null;
  doWarp(0,true);
  G.justWarped=true;
 }
@@ -544,7 +557,7 @@ function updateMarch(dt){
 /* ---------- update ---------- */
 function update(dt){
  if(G.justWarped){G.justWarped=false;G.dying=false;return;}
- if(G.finale){G.finale.t-=dt;if(G.finale.t<=0){const b=G.finale.bonus;G.finale=null;doWarp(b);return;}}
+ if(G.megaHold){G.megaHold.t-=dt;if(G.megaHold.t<=0){G.megaHold=null;waveClear();save();return;}return;}
  const s=G.s,P=G.p;G.t+=dt;S.playTime+=dt;
  const warpMul=G.warpFx>0?1+G.warpFx*12:1;
  for(const st of G.stars){st.y+=st.v*dt*warpMul;if(st.y>=H){st.y-=H;st.x=Math.random()*W;}}
@@ -583,8 +596,8 @@ function update(dt){
    G.pb.push({x:dx0,y:dy0,py:dy0,vx:Math.cos(ang)*180,vy:Math.sin(ang)*180,dmg:s.droneDmg,k:'drone'});}}
  // spawning
  if(!G.isBoss&&G.toSpawn>0){G.spawnT-=dt;if(G.spawnT<=0){let alive=0;for(const e of G.enemies)if(e.counts)alive++;if(alive<maxAliveOf(S.wave)){spawnWaveEnemy();G.spawnT=rnd(0.25,0.7)*Math.max(0.2,1-S.wave/70);}}}
- if(G.isBoss&&G.toSpawn>0&&!G.finale){G.spawnT-=dt;if(G.spawnT<=0){spawnBoss(G.final?(BOSSES.find(b=>b.final)||bossFor(S.wave)):bossFor(S.wave));G.toSpawn=0;}}
- if(G.isBoss&&G.bossAlive&&!G.finale){G.bossT-=dt;if(G.bossT<=0){failWave(G.final?'PHASE LOST':G.boss.name+' ESCAPED');return;}}
+ if(G.isBoss&&G.toSpawn>0&&!G.megaHold){G.spawnT-=dt;if(G.spawnT<=0){spawnBoss(G.mega?(megaDef(S.wave)||bossFor(S.wave)):bossFor(S.wave));G.toSpawn=0;}}
+ if(G.isBoss&&G.bossAlive&&!G.megaHold){G.bossT-=dt;if(G.bossT<=0){failWave(G.mega?'PHASE LOST':G.boss.name+' ESCAPED');return;}}
  // enemy fire (standard shooters)
  for(const e of G.enemies){if(e.boss||!e.T.fire||e.y<4||e.cloak>0.3)continue;if(e.ai==='dive'&&e.state==='dive')continue;e.fireT-=dt;if(e.fireT<=0){e.fireT=rnd(2.6,4.4)/e.T.fire/(1+S.wave/80);enemyFire(e);}}
  // player bullets
@@ -701,12 +714,12 @@ function render(){
  ctx.globalAlpha=1;ctx.setTransform(1,0,0,1,0,0);
  if(G.flash>0){ctx.globalAlpha=G.flash*0.6;ctx.fillStyle='#ffffff';ctx.fillRect(0,0,W,H);ctx.globalAlpha=1;}
  // HUD
- if(G.final)drawText('FINAL BOSS - PHASE '+(S.wave-90)+'/5',3,3,'#ff4d5e');
+ if(G.mega)drawText(megaPhaseText(S.wave),3,3,'#ff4d5e');
  else drawText('WAVE '+S.wave,3,3,'#7fe7ff');
  drawText('SECTOR '+(G.sector+1),W-3,3,'#7383bb','right');
- if(!S.auto&&!G.final)drawText('FARM',W/2,3,'#ff9f1c','center');
- if(G.isBoss){const b=G.boss,bh=b&&G.bossAlive?b.hp/b.maxHp:(G.finale?0:1);
-  if(G.final){const cols=['#6bff8a','#8a94a6','#ffe066','#ff4d5e','#ff5ccf'];bar(3,11,W-6,3,bh,cols[((b&&b.form)||1)-1]||'#ff4d5e');drawText(b?b.name:'THE MAW',3,17,'#ff5ccf');}
+ if(!S.auto&&!G.mega)drawText('FARM',W/2,3,'#ff9f1c','center');
+ if(G.isBoss){const b=G.boss,bh=b&&G.bossAlive?b.hp/b.maxHp:(G.megaHold?0:1);
+  if(G.mega){const cols=['#6bff8a','#8a94a6','#ffe066','#ff4d5e','#ff5ccf'];bar(3,11,W-6,3,bh,cols[((b&&b.form)||1)-1]||'#ff4d5e');drawText(b?b.name:'THE MAW',3,17,'#ff5ccf');}
   else{bar(3,11,W-6,3,bh,b&&b.phase===2?'#ff5ccf':'#ff4d5e');drawText(b?b.name:bossFor(S.wave).name,3,17,'#ff4d5e');}
   drawText(Math.ceil(Math.max(0,G.bossT))+'S',W-3,17,G.bossT<10&&(G.t*4|0)%2?'#ffffff':'#ff9f1c','right');}
  else bar(3,11,W-6,2,S.waveKills/G.need,'#ffe066');
@@ -816,7 +829,7 @@ function refreshStore(){
  }
  if(curTab==='warp'){
   const g=dmGain();
-  const html='<h3>◆ WARP JUMP</h3>Jump to a new timeline. Resets credits, ship upgrades, gun levels and waves. Keeps Dark Matter and unlocked guns.<br>A hull breach does this for you: <span style="color:#ff4d5e">HULL BREACH - EMERGENCY WARP</span>. It pays the same Dark Matter as the button, and nothing before wave 20. It does not count the Maw bounty.<br>Each DM ever earned: <span style="color:#ff5ccf">+5% damage & credits</span> (now x'+(1+0.05*S.dmTotal).toFixed(2)+')<br>'+
+  const html='<h3>◆ WARP JUMP</h3>Jump to a new timeline. Resets credits, ship upgrades, gun levels and waves. Keeps Dark Matter and unlocked guns.<br>A hull breach does this for you: <span style="color:#ff4d5e">HULL BREACH - EMERGENCY WARP</span>. It pays the same Dark Matter as the button, and nothing before wave 20.<br>Clearing a mega boss pays its own bounty once per run, then the run keeps going. A hull breach does not pay that bounty.<br>Each DM ever earned: <span style="color:#ff5ccf">+5% damage & credits</span> (now x'+(1+0.05*S.dmTotal).toFixed(2)+')<br>'+
    'Highest wave cleared this run: <span style="color:#ffe066">'+S.maxWave+'</span><br>'+(g>0?'Warp now for <span style="color:#ff5ccf">+'+fmt(g)+' DM</span>':'Clear wave 20 to unlock Warp Jump');
   const box=$('#warpBox');if(box._h!==html){box._h=html;box.innerHTML=html;const b=mkEl('button','pbtn big warpbtn','WARP JUMP');b.id='warpBtn';b.addEventListener('click',askWarp);box.appendChild(b);}
   $('#warpBtn').disabled=g<=0;
@@ -832,7 +845,7 @@ function refreshStore(){
   const st=storageOK?'<span style="color:#6bff8a">● AUTOSAVE ON</span> — last saved '+(ago==null?'never':ago<2?'just now':ago+'s ago'):'<span style="color:#ff4d5e">● THIS BROWSER IS BLOCKING SAVES FOR LOCAL FILES.</span> Use EXPORT to keep your progress.';
   const ss=$('#storeStatus');if(ss._h!==st){ss._h=st;ss.innerHTML=st;}
   const skn=(C.skins.find(x=>x.id===S.skin)||C.skins[0]).name;
-  const rows=[['Credits',fmt(S.credits)],['Income','+'+fmt(S.cps)+'/s'],['Wave',S.wave],['Best wave ever',S.best],['Cleared this run',S.maxWave],['Total kills',fmt(S.kills)],['Bosses destroyed',S.bossKills],['Maw slain',S.finalKills|0],['Ship skin',skn],['Hull breaches',S.deaths],['Total credits earned',fmt(S.totalCredits)],['Warp jumps',S.warps],['Dark Matter (total)',fmt(S.dmTotal)],
+  const rows=[['Credits',fmt(S.credits)],['Income','+'+fmt(S.cps)+'/s'],['Wave',S.wave],['Best wave ever',S.best],['Cleared this run',S.maxWave],['Total kills',fmt(S.kills)],['Bosses destroyed',S.bossKills],['Mega bosses slain',S.finalKills|0],['Ship skin',skn],['Hull breaches',S.deaths],['Total credits earned',fmt(S.totalCredits)],['Warp jumps',S.warps],['Dark Matter (total)',fmt(S.dmTotal)],
    ['Primary',WMAP[S.pri].name+' LV'+S.wl[S.pri]],['Secondary',S.sec?WMAP[S.sec].name+' LV'+S.wl[S.sec]:'-'],
    ['DPS (est.)',fmt(gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*s.drones/0.9)],['Max hull',fmt(s.maxHull)],['Play time',fmtTime(S.playTime)]];
   const h=rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('');const t=$('#statTable');if(t._h!==h){t._h=h;t.innerHTML=h;}
@@ -864,15 +877,14 @@ function openNotes(){
 }
 $('#importBtn').addEventListener('click',openImport);
 function doReset(){noSave=true;lsDel(KEY);lsDel(KEY+'_bak');noSave=false;S=fresh();S.seenVersion=VERSION;resetRun();toast('PROGRESS RESET');save();}
-function resetRun(){recalc();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.dead=false;G.pb=[];G.caps=[];G.droneT=[];G.captured=0;G.overT=0;G.finale=null;G.wT={pri:0,sec:0};G.buckets=[];G.sector=-1;startWave();refreshStore();}
+function resetRun(){recalc();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.dead=false;G.pb=[];G.caps=[];G.droneT=[];G.captured=0;G.overT=0;G.megaHold=null;G.wT={pri:0,sec:0};G.buckets=[];G.sector=-1;startWave();refreshStore();}
 function askWarp(){const g=dmGain();if(g<=0)return;modal('WARP JUMP?','Reset credits, upgrades, gun levels and waves for <b style="color:#ff5ccf">+'+fmt(g)+' Dark Matter</b>. Unlocked guns are kept.',[{t:'CANCEL'},{t:'JUMP',cls:'warpbtn',fn:doWarp}]);}
-function doWarp(extra,forced){const add=!forced&&typeof extra==='number'&&extra>0?Math.floor(extra):0;const g=dmGain()+add;if(!(g>0)&&!forced)return;const prev=storeCtx();if(g>0){S.dm+=g;S.dmTotal+=g;S.warps++;}S.credits=0;UPG.forEach(u=>S.u[u.id]=0);WEAP.forEach(w=>{if(S.wl[w.id]>1)S.wl[w.id]=1;});
- S.wave=1+5*S.d.warp;S.maxWave=0;S.best=Math.max(S.best,S.wave);G.warpFx=1.5;G.flash=1;SFX.warp();resetRun();
+function doWarp(extra,forced){const g=dmGain();if(!(g>0)&&!forced)return;const prev=storeCtx();if(g>0){S.dm+=g;S.dmTotal+=g;S.warps++;}S.credits=0;UPG.forEach(u=>S.u[u.id]=0);WEAP.forEach(w=>{if(S.wl[w.id]>1)S.wl[w.id]=1;});
+ S.wave=1+5*S.d.warp;S.maxWave=0;S.megaPaid=0;S.best=Math.max(S.best,S.wave);G.warpFx=1.5;G.flash=1;SFX.warp();resetRun();
  if(forced)banner('HULL BREACH - EMERGENCY WARP','#ff4d5e',2.8);
- else banner(add?'WARP + MAW BOUNTY':'WARP JUMP!','#ff5ccf',2.5);
+ else banner('WARP JUMP!','#ff5ccf',2.5);
  notifyUnlocks(prev);
  if(forced)toast((g>0?'+'+fmt(g):'+0')+' DARK MATTER');
- else if(add)toast('MAW BOUNTY +'+fmt(add)+' DM');
  save();}
 function equipSkin(id){if(!(S.skins&&S.skins[id]>=1)){SFX.deny();return;}if(S.skin===id)return;S.skin=id;SFX.buy();const sk=C.skins.find(s=>s.id===id);toast((sk?sk.name:id)+' EQUIPPED');save(true);refreshStore();}
 function refreshSkins(){const sl=$('#skinList');if(!sl)return;const rows=C.skins.filter(sk=>IV.isStarter(sk.unlock)||(S.skins&&S.skins[sk.id]>=1)||open(sk.unlock));
@@ -927,8 +939,8 @@ window.addEventListener('resize',fit);
 G.paused=!!window.__IV_START_PAUSED; // tests: start frozen for deterministic sims
 function applyDebugQuery(){
  let q;try{q=new URLSearchParams(location.search);}catch(e){return;}
- if(q.get('final')!=='1')return;
- noSave=true;S.wave=91;S.best=Math.max(S.best|0,91);
+ if(q.get('mega')!=='1'&&q.get('final')!=='1')return;
+ noSave=true;const m=BOSSES.find(b=>bossTier(b)==='mega');S.wave=m&&m.fromWave?m.fromWave:91;S.best=Math.max(S.best|0,S.wave);
  if(q.get('mute')==='1')S.muted=true;
  if(q.get('kit')!=='1')return;
  S.warps=Math.max(3,S.warps|0);S.dmTotal=Math.max(40,S.dmTotal|0);S.dm=Math.max(40,S.dm|0);
@@ -951,5 +963,5 @@ function simRun(sec,taps){const dt=1/30;let tapT=0,sampT=0;G.ms=G.ms||{n:0,sum:0
    if(tg){const wk=tg.parts&&tg.parts.find(p=>p.kind==='weak');const b={x:tg.x+(wk?wk.ox:0),y:tg.y+(wk?wk.oy:0),py:tg.y+(wk?wk.oy:0),r:3};const where=findHit(tg,b)||'body';applyHit(tg,where,G.s.click,true,b.x,b.y);G.enemies=G.enemies.filter(e=>!e.dead);}}}
   sampT-=dt;if(sampT<=0){sampT=0.5;const n=G.enemies.filter(e=>e.y>0&&e.y<H&&!e.boss).length;G.ms.n++;G.ms.sum+=n;G.ms.max=Math.max(G.ms.max,n);}}}
 function playerST(taps){const s=G.s;return gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*Math.max(0,s.drones-G.captured)/0.9+taps*s.click*(1+s.crit*2);}
-window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,bossFor,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,sim:simRun,playerST,eHP:w=>eHP(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isFinalWave,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
+window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,sim:simRun,playerST,eHP:w=>eHP(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
 })();

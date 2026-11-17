@@ -31,7 +31,7 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | wave 20 | **Warp Jump** available (run-based: clear wave 20 this run) |
 | sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Xeno Biomech (25), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
-| sector 10 (wave 91) | THE MAW, waves 91-95. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
+| sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
 | future | Missions, more skins (R13), sector modifiers and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
 
 Guideline: new **combat content** goes where the current content runs out (waves 25-60, sectors 3-6). New **meta systems** gate on `warps` so the first run stays simple. A capstone the owner asks for can sit past the stall (THE MAW at sector 10). It still needs a gate a fresh save cannot open.
@@ -46,22 +46,36 @@ Each file in `src/content/` documents its fields in a header comment. Summary:
 - **upgrades.js**: credit upgrades `{id, name, desc, icon, base, g, max?, req?, unlock, show(stats, level)}`, with effects in `calcStats()`. Dark Matter `{id, icon, name, desc, base, g, max?, unlock, show(level)}`.
 - **guns.js**: `{id, name, desc, icon, R, rm, cost, unlock, proj(m), fire(A,g), sfx(A), draw?, charge?, sfxGap?}`. The engine derives per-shot damage from `R/rm/proj`, so total DPS is comparable across guns.
 - **enemies.js**: `{id, name, threat?, unlock, weight, late?, squad?, big?, hp, rew, dmg, spd, fire, shots, ai, shield?, sprite, init?, update?}`. Built-in `ai`: roam, dive, march, kami, rock, sniper, cloak. Use `custom` plus `update(e,dt,A)` for new behaviours.
-- **bosses.js**: `{id, name, unlock (wave multiple of 5), hp, body, escorts, palette?, half, setup(e,A), update(e,dt,A), draw?(e,A,ctx), final?, phaseLock?}`. The rotation cycles through bosses whose gate is open at the current wave, in list order, skipping `final:true`. **Append new bosses at the end** so existing waves keep their bosses. Parts may be `{kind:'limb'}` or `{kind:'core'}` as well as weak, wall and block. `phaseLock` skips the automatic 50% enrage.
+- **bosses.js**: `{id, name, tier, unlock (wave multiple of 5), hp, body, escorts, palette?, half, setup(e,A), update(e,dt,A), draw?(e,A,ctx), phaseLock?, fromWave?, phases?}`. `tier` is `standard`, `elite`, or `mega` (higher tiers can be added later). A missing tier counts as `standard`. The every-5 rotation cycles through **standard** bosses whose gate is open at the current wave, in list order. Elite and mega bosses are not in that rotation. **Append new standard bosses at the end** so existing waves keep their bosses. Parts may be `{kind:'limb'}` or `{kind:'core'}` as well as weak, wall and block. `phaseLock` skips the automatic 50% enrage. A mega boss sets `fromWave` and `phases` for the waves it occupies.
 - **features.js**: mechanic flags `{id, name, desc, unlock, announce?}`, checked in the engine with `feat(id)`.
 - **missions.js**: reserved, and the contract gets fixed by the roadmap item that implements it.
 
-The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase`. `nextPhase(e)` advances a `final` boss one wave and rebuilds it. Extend the API rather than reaching into engine internals.
+The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase`. `nextPhase(e)` advances a mega boss one wave and rebuilds it. Extend the API rather than reaching into engine internals.
 
-**Save compatibility:** the key is `voidbreaker_save_v1` (legacy name, never change it). New persistent state goes in `fresh()` with a default, and `migrate()` copies known fields and fills the rest. New upgrade, gun and Dark Matter ids get level 0 automatically. `S.skin`, `S.skins` and `S.finalKills` are persistent. Warp Jump does not clear them. Reset All does, because it loads `fresh()`.
+**Save compatibility:** the key is `voidbreaker_save_v1` (legacy name, never change it). New persistent state goes in `fresh()` with a default, and `migrate()` copies known fields and fills the rest. New upgrade, gun and Dark Matter ids get level 0 automatically. `S.skin`, `S.skins` and `S.finalKills` are persistent. `S.finalKills` is the lifetime count of mega-boss clears. The key name stays so old saves load. `S.megaPaid` is 1 after this run has taken a mega-boss bounty. Warp Jump, including a hull breach, clears `megaPaid` and does not clear `finalKills` or owned skins. Reset All does, because it loads `fresh()`.
 
-## Final boss: THE MAW
-Sector 10 wave 1 is wave 91 (`sector = floor((wave-1)/10)+1`). `isFinalWave` is waves 91-95. Those waves spawn THE MAW (`id: 'maw'`, `final:true`) instead of a normal wave or the rotating boss. The registry gate is `{wave:90, sector:10}`: wave 90 is a multiple of 5, and sector 10 stays closed until wave 91, so the boss is out of the rotation and off a fresh save.
+## No ending
+The game is endless. There is no final boss and no end state. Waves continue past 95, sectors continue past 10 (sector art cycles after the five pictures that exist), and a later day can add bosses of any tier, including more mega bosses. Do not treat THE MAW, or the latest set-piece, as the last content.
 
-One boss persists across the five waves. The HUD reads `FINAL BOSS - PHASE n/5` with `n = wave-90`. A phase ends when its break condition calls `nextPhase` (or, on phase 5, when the core dies). The wave counter advances then. No regular spawns run during the encounter.
+## Boss tiers
+Every boss has a `tier` field. The number is the tier; the string is what the registry stores.
 
-Each phase has a 90 second clock. A hull breach does not restart the phase. It is an emergency Warp Jump, same as any other wave, with no Maw bounty and no Eidolon. A timeout still restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. Outside the Maw, a boss that escapes still drops one wave. A hull breach never does.
+| Tier | `tier` | What it is | Who is live |
+|---|---|---|---|
+| 1 | `standard` | The every-5-waves rotation. Append new ones at the end of that list. | Dreadnought, Boss Galaga, Mothership, Big Core, Xeno Biomech |
+| 2 | `elite` | A sector or set-piece boss. Not part of the standard rotation. Spawn it from its own gate when that day ships. | None yet |
+| 3 | `mega` | A multi-phase, multi-wave encounter, gated by sector or warp. `fromWave` and `phases` mark the waves it occupies. | THE MAW, waves 91-95 |
 
-The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). While that armor is up, the ship's guns, homing missiles and drones aim at a live tentacle (nearest, then lowest health) and do not spend shots on the core. Phase 3 has no tentacles: the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the guns switch to the mouth once the tentacles are gone. Killing that mouth is the only kill.
+A missing `tier` counts as `standard`, so an old entry still rotates. Elite and mega bosses are left out of `bossFor`. Higher tiers can be added later without an end state. The same boss id is never renamed.
+
+## Mega boss: THE MAW
+Sector 10 wave 1 is wave 91 (`sector = floor((wave-1)/10)+1`). `isMegaWave` is true while a mega boss's `fromWave` span covers the wave. THE MAW (`id: 'maw'`, `tier:'mega'`, `fromWave:91`, `phases:5`) occupies waves 91-95 instead of a normal wave or the rotating boss. The registry gate is `{wave:90, sector:10}`: wave 90 is a multiple of 5, and sector 10 stays closed until wave 91, so the boss is out of the rotation and off a fresh save. Wave 96 is an ordinary wave. Wave 100 is a standard boss again.
+
+One boss persists across the five waves. The HUD reads `MEGA BOSS - PHASE n/5` with `n = wave - fromWave + 1`. A phase ends when its break condition calls `nextPhase` (or, on phase 5, when the core dies). The wave counter advances then. No regular spawns run during the encounter.
+
+Each phase has a 90 second clock. A hull breach does not restart the phase. It is an emergency Warp Jump, same as any other wave, with no Maw bounty and no Eidolon. A timeout still restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. Outside a mega boss, a boss that escapes still drops one wave. A hull breach never does.
+
+The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). While that armor is up, the ship's guns, homing missiles and drones aim at a live tentacle (nearest, then lowest health) and do not spend shots on the core. Phase 3 has no tentacles: the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the guns switch to the mouth once the tentacles are gone. Killing that mouth clears the encounter.
 
 | Phase | Wave | What breaks | Pattern |
 |---|---|---|---|
@@ -69,13 +83,13 @@ The core is armored while the current phase still has living tentacles (`bodyMul
 | 2 | 92 | 4 armoured Hungry, 6×eHP at 0.75 damage taken | Spore shots, scout minions, slams |
 | 3 | 93 | 2 eyes, 11.5×eHP each (23×eHP) | Each open eye sweeps a laser. Both eyes burst to reach phase 4 |
 | 4 | 94 | 4 fast Hungry, 6.4×eHP each (25.6×eHP) | Faster tip fans, fighter minions, slams. The wall sits lower |
-| 5 | 95 | 4 Hungry, 4.4×eHP each, then the mouth at 16×eHP | Spinning bullet ring, tip bolts. Mouth death ends the fight |
+| 5 | 95 | 4 Hungry, 4.4×eHP each, then the mouth at 16×eHP | Spinning bullet ring, tip bolts. Mouth death clears the encounter |
 
 The body is a wall of flesh across the full width of the top of the playfield: ribbed meat, veins, teeth, two bloodshot eyes and a central mouth. Four thick Hungry tethers hang from the wall and end in snapping mouths. They are jointed segments on a fixed-length chain, pooled on the boss, and each segment's hitbox covers that segment. A severed tether leaves a stump; the broken length tumbles away in one piece. Idle contact damage is the tip only; a slam hits along the arm. Enemy bullets during the fight are pooled and capped. The hit-point totals above are the same budget as 1.1.1.
 
-On the kill: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidolon`), a short victory plays, then the existing Warp Jump runs. The bounty is `max(15, floor(normal Dark Matter × 0.5))` added to the normal gain. Later runs can fight the Maw again. The skin is not granted twice. Reset All locks it again.
+On the clear: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidolon`), and a short `MAW FALLS` beat plays. The run then continues at the next wave (wave 96 when auto-advance is on). It does not Warp Jump. The bounty, once per run, is `max(15, floor(dmGain() × 0.5))` Dark Matter added straight to `S.dm` and `S.dmTotal`, plus `floor(eRew(wave) × 20)` credits. `S.megaPaid` remembers the payout. A second clear in the same run, including farm mode repeating wave 95, pays nothing more. Warp Jump and a hull breach set `megaPaid` back to 0, so the next run can earn it once. The bounty is never larger than that formula, and a death still pays only `dmGain()`. The skin is not granted twice. Reset All locks it again. Later runs can fight the Maw again. A voluntary warp after the clear pays normal `dmGain()` only, with no second bounty.
 
-`?final=1` jumps to wave 91 and sets `noSave`, so that tab cannot write the save. `?kit=1` (only together with `final=1`) loads a strong kit and sets `G.debugMul` from `eHP * 24/25` over primary DPS, high enough for that idle kit to finish each Maw phase inside the 90 second clock. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
+`?mega=1` jumps to the mega boss's `fromWave` (wave 91) and sets `noSave`, so that tab cannot write the save. `?final=1` is the same jump, kept as an alias. `?kit=1` (only together with `?mega=1` or `?final=1`) loads a strong kit and sets `G.debugMul` from `eHP * 24/25` over primary DPS, high enough for that idle kit to finish each Maw phase inside the 90 second clock. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
 
 ## Death
 A hull breach runs the Warp Jump reset immediately: credits, ship upgrades and gun levels clear, unlocked guns stay, and the next run starts at wave `1 + 5 * Warp Drive`. The banner reads `HULL BREACH - EMERGENCY WARP`, and a toast shows the Dark Matter earned.

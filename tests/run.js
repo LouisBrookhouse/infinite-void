@@ -1,5 +1,5 @@
 /* INFINITE VOID browser test suite (headless Playwright/Chromium).
- * node tests/run.js [--only smoke,save,migration,gating,balance] [--verbose]
+ * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega] [--verbose]
  * Locally you can point at an installed Chrome with CHROME_PATH=/usr/bin/google-chrome.
  * Writes artifacts/ (screenshots, balance report) for CI upload. */
 const {chromium}=require('playwright');
@@ -30,7 +30,7 @@ async function newPage(opts){
  page.on('console',m=>{if(m.type()==='error')errors.push('console: '+m.text());});
  page.on('requestfailed',r=>errors.push('requestfailed: '+r.url()));
  page.on('response',r=>{if(r.status()>=400)errors.push('http '+r.status()+': '+r.url());});
- await page.goto(BASE,{waitUntil:'load'});
+ await page.goto(BASE+(opts.query||''),{waitUntil:'load'});
  await page.waitForFunction(()=>window.__IV&&__IV.G&&__IV.G.s);
  return {ctx,page,errors};
 }
@@ -280,6 +280,110 @@ async death(){
  assert.strictEqual(r.maw.save.finalKills,0);assert.strictEqual(r.maw.save.wave,1);
  noErrors(errors,'death');
  await ctx.close();
+},
+async mega(){
+ const {ctx,page,errors}=await newPage();
+ await page.evaluate(()=>__IV.pause(true));
+ await dismissModal(page);
+ const r=await page.evaluate(()=>{
+  const I=__IV,S=I.S,G=I.G;
+  const toast=()=>document.getElementById('toast').textContent;
+  const saved=()=>JSON.parse(localStorage.getItem(I.KEY));
+  const tiers=I.BOSSES.map(b=>({id:b.id,tier:b.tier||'',final:!!b.final}));
+  const rot=[];
+  for(let w=5;w<=100;w+=5)rot.push(I.bossFor(w).id);
+  const span={};
+  for(const w of [90,91,92,93,94,95,96])span[w]=I.isMegaWave(w);
+  const labels={p1:I.megaPhaseText(91),p5:I.megaPhaseText(95)};
+  const migrated=I.migrate({credits:1,u:{},finalKills:4});
+  S.wave=91;S.maxWave=90;S.best=91;S.auto=true;
+  I.startWave();
+  const intro={mega:G.mega,banner:G.banner&&G.banner.txt,toast:toast(),phase:I.megaPhaseText(S.wave)};
+  function slay(){
+   G.spawnT=0;G.p.hull=1e9;G.p.y=220;
+   I.step(1/60);
+   const e=G.boss;if(!e)throw new Error('no mega boss');
+   e.parts=[];e.limbs=[];e.hp=1;e.maxHp=1;e.bodyMult=1;e.holdKill=false;e.a1=99;e.a2=99;
+   e.x=90;e.y=36;e.tx=90;e.ty=36;
+   G.eb.length=0;G.pb.length=0;
+   G.pb.push({x:90,y:36,py:37,vx:0,vy:-10,dmg:100,r:30,k:'orb'});
+   I.step(1/60);
+  }
+  S.wave=95;S.maxWave=95;S.best=95;S.auto=true;S.megaPaid=0;S.finalKills=0;S.skins.eidolon=0;
+  S.dm=3;S.dmTotal=3;S.warps=1;S.credits=1000;S.u.dmg=2;S.deaths=0;
+  I.recalc();
+  const reward=I.megaReward();
+  I.startWave();
+  slay();
+  const clear={
+   wave:S.wave,warps:S.warps,dm:S.dm,dmTotal:S.dmTotal,credits:S.credits,dmg:S.u.dmg,
+   kills:S.finalKills|0,skin:S.skins.eidolon|0,paid:S.megaPaid|0,deaths:S.deaths,
+   banner:G.banner&&G.banner.txt,toast:toast(),hold:!!G.megaHold,reward
+  };
+  I.step(3);
+  const next={wave:S.wave,warps:S.warps,mega:G.mega,hold:G.megaHold,credits:S.credits,dmg:S.u.dmg,dm:S.dm,paid:S.megaPaid|0,save:saved()};
+  const dmHeld=S.dm;
+  S.wave=95;I.startWave();slay();
+  const again={dm:S.dm,paid:S.megaPaid|0,kills:S.finalKills|0,skin:S.skins.eidolon|0,warps:S.warps,wave:S.wave};
+  I.step(3);
+  const gain=I.dmGain();
+  const before=S.dm;
+  I.die();
+  const died={gain,dm:S.dm-before,wave:S.wave,warps:S.warps,paid:S.megaPaid|0,kills:S.finalKills|0,skin:S.skins.eidolon|0,credits:S.credits,banner:G.banner&&G.banner.txt,save:saved(),held:dmHeld};
+  return {tiers,rot,span,labels,migrated:{kills:migrated.finalKills,paid:migrated.megaPaid},intro,clear,next,again,died};
+ });
+ assert.deepStrictEqual(r.tiers.map(b=>b.tier).filter(Boolean).length,r.tiers.length,'every boss has a tier');
+ assert.ok(r.tiers.every(b=>!b.final),'no boss is flagged final');
+ assert.deepStrictEqual(r.tiers.find(b=>b.id==='maw').tier,'mega');
+ for(const id of ['dread','galaga','ufo','core','bio'])assert.strictEqual(r.tiers.find(b=>b.id===id).tier,'standard',id);
+ assert.ok(r.rot.every(id=>id!=='maw'),'the rotation never picks the mega boss');
+ assert.deepStrictEqual(r.span,{90:false,91:true,92:true,93:true,94:true,95:true,96:false});
+ assert.strictEqual(r.labels.p1,'MEGA BOSS - PHASE 1/5');
+ assert.strictEqual(r.labels.p5,'MEGA BOSS - PHASE 5/5');
+ assert.strictEqual(r.migrated.kills,4);assert.strictEqual(r.migrated.paid,0);
+ assert.strictEqual(r.intro.mega,true);
+ assert.strictEqual(r.intro.banner,'MEGA BOSS');
+ assert.strictEqual(r.intro.toast,'MEGA BOSS - PHASE 1/5');
+ assert.strictEqual(r.clear.wave,95,'the clear beat has not advanced yet');
+ assert.strictEqual(r.clear.warps,1,'a clear is not a warp');
+ assert.strictEqual(r.clear.dm,3+r.clear.reward.dm);
+ assert.strictEqual(r.clear.dmTotal,3+r.clear.reward.dm);
+ assert.ok(r.clear.credits>=1000+r.clear.reward.credits,'credits bounty is paid on top of the kill');
+ assert.strictEqual(r.clear.dmg,2);assert.strictEqual(r.clear.kills,1);assert.strictEqual(r.clear.skin,1);
+ assert.strictEqual(r.clear.paid,1);assert.strictEqual(r.clear.deaths,0);
+ assert.strictEqual(r.clear.banner,'MAW FALLS');
+ assert.ok(r.clear.toast.includes('EIDOLON'));assert.ok(r.clear.toast.includes('DM'));
+ assert.strictEqual(r.clear.hold,true);
+ assert.strictEqual(r.next.wave,96,'the run continues');
+ assert.strictEqual(r.next.warps,1);assert.strictEqual(r.next.mega,false);assert.strictEqual(r.next.hold,null);
+ assert.ok(r.next.credits>0);assert.strictEqual(r.next.dmg,2);assert.strictEqual(r.next.dm,r.clear.dm);assert.strictEqual(r.next.paid,1);
+ assert.strictEqual(r.next.save.wave,96);assert.strictEqual(r.next.save.warps,1);assert.strictEqual(r.next.save.megaPaid,1);
+ assert.strictEqual(r.next.save.finalKills,1);assert.strictEqual(r.next.save.skins.eidolon,1);
+ assert.strictEqual(r.again.dm,r.clear.dm,'a second clear in the same run pays no more Dark Matter');
+ assert.strictEqual(r.again.paid,1);assert.strictEqual(r.again.kills,2);assert.strictEqual(r.again.skin,1);
+ assert.strictEqual(r.again.warps,1);assert.strictEqual(r.again.wave,95);
+ assert.ok(r.died.gain>0);
+ assert.strictEqual(r.died.dm,r.died.gain,'death pays dmGain only, not another bounty');
+ assert.strictEqual(r.died.wave,1);assert.strictEqual(r.died.warps,2);assert.strictEqual(r.died.paid,0);
+ assert.strictEqual(r.died.kills,2);assert.strictEqual(r.died.skin,1);assert.strictEqual(r.died.credits,0);
+ assert.strictEqual(r.died.banner,'HULL BREACH - EMERGENCY WARP');
+ assert.strictEqual(r.died.save.megaPaid,0);assert.strictEqual(r.died.save.finalKills,2);assert.strictEqual(r.died.save.wave,1);
+ noErrors(errors,'mega');
+ await ctx.close();
+ const jump=async(query)=>{
+  const p=await newPage({query,init:{fn:()=>{window.__IV_START_PAUSED=true;}}});
+  const s=await p.page.evaluate(()=>({wave:__IV.S.wave,mega:__IV.G.mega,banner:__IV.G.banner&&__IV.G.banner.txt,saved:__IV.save(),kit:__IV.G.debugMul,pri:__IV.S.pri}));
+  noErrors(p.errors,'mega '+query);
+  await p.ctx.close();
+  return s;
+ };
+ const megaQ=await jump('?mega=1');
+ assert.strictEqual(megaQ.wave,91);assert.strictEqual(megaQ.mega,true);assert.strictEqual(megaQ.banner,'MEGA BOSS');
+ assert.strictEqual(megaQ.saved,false,'?mega=1 does not write the save');
+ const alias=await jump('?final=1');
+ assert.strictEqual(alias.wave,91);assert.strictEqual(alias.mega,true);assert.strictEqual(alias.saved,false);
+ const kit=await jump('?mega=1&kit=1');
+ assert.strictEqual(kit.wave,91);assert.ok(kit.kit>1,'kit raises debug damage');assert.strictEqual(kit.pri,'laser');
 },
 };
 

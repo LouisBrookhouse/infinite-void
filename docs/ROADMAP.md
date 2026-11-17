@@ -2,6 +2,8 @@
 
 How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping. An owner request can pull a later item forward. On 2026-11-17 the owner pulled THE MAW (R33) ahead of R01. R01 stays the next unticked item. R30 Void Leviathan is a different boss.
 
+The game does not end. There is no final boss and no end state. Bosses have tiers (standard, elite, mega, and room for more). Future days can add bosses of any tier, including more mega bosses, and sectors past 10. See DESIGN.md.
+
 Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol] [new ship types]**
 
 ## Sector 3-4 (waves 21-40): where content currently thins out
@@ -47,9 +49,10 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 
 
 ## Shipped
+- [x] **F04 [boss] Mega bosses, no ending** (v1.1.4, 2026-11-17). Boss tiers. THE MAW is tier 3. Clearing it continues the run and pays a once-per-run bounty. Waves continue past 95.
 - [x] **F03 [mechanic] Death is an emergency warp** (v1.1.3, 2026-11-17). A hull breach runs a Warp Jump and pays the same Dark Matter. No wave retreat. Dying to THE MAW does not restart the phase or pay the bounty.
 - [x] **R33b [boss] Maw, wall of flesh** (v1.1.2, 2026-11-17). Four Hungry tentacles, two eyes, a mouth. Guns aim at the live parts. Same HP budget and gates as R33.
 - [x] **R33a [art] Maw tentacles** redraw. Thick tapering limbs on the screen-filling silhouette. Same HP, phases and gates as R33. (v1.1.1, 2026-11-17)
-- [x] **R33 [boss] THE MAW** (sector 10, waves 91-95). Owner request, shipped ahead of R01. Five-phase tentacle boss, Eidolon skin, auto Warp Jump with a Dark Matter bounty. Not R30. (v1.1.0, 2026-11-17)
+- [x] **R33 [boss] THE MAW** (sector 10, waves 91-95). Owner request, shipped ahead of R01. Tier-3 mega boss, five phases, Eidolon skin. Clearing it continues the run (v1.1.4). Not R30. (v1.1.0, 2026-11-17)
 - [x] **F01 Fix: reset no longer marks patch notes unread** (first pipeline check of auto-merge) (v1.0.1, 2026-11-17)
 - [x] **R00 Launch as INFINITE VOID**: data-driven registries, gates, patch notes, CI guardrails, auto-deploy (v1.0.0, 2026-11-17)

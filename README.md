@@ -5,7 +5,7 @@ A chunky pixel-art idle space shooter that grows by itself: an AI agent ships **
 **Play:** https://louisbrookhouse.github.io/infinite-void/
 
 - Your ship fires on its own. Tap enemies for bonus damage and aim for glowing weak points on bosses.
-- Spend credits on ship upgrades and guns. Every 5th wave is a boss.
+- Spend credits on ship upgrades and guns. Every 5th wave is a boss. The run has no last wave.
 - Warp Jump from wave 20 for Dark Matter, which buys permanent upgrades.
 - Progress autosaves in your browser. SAVE/STATS > EXPORT gives a code you can load anywhere.
 - Tap the version number (top left) to read the patch notes.

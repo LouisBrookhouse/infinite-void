@@ -7,18 +7,20 @@
  *   phase 2 starts at 50% HP), draw?(e,A,ctx) extra effects}.
  * Parts: {kind:'weak', ox, oy, w, h, mult, eye?:{oy,c}} | {kind:'wall', ..., hp, maxHp} | {kind:'block', ...}
  *   | {kind:'limb', li, si, ox, oy, w, h} | {kind:'core', ox, oy, w, h} | {kind:'eye', ox, oy, w, h, hp, maxHp}.
- * final:true bosses are left out of the 5-wave rotation. THE MAW runs sector 10 waves 91-95.
+ * tier: 'standard' (every-5 rotation) | 'elite' (sector set-piece, not in the rotation) | 'mega'
+ *   (multi-phase encounter, not in the rotation). THE MAW is mega, waves 91-95 (fromWave, phases).
+ *   The game does not end. More bosses of any tier can be added, including more mega bosses.
  * A (engine API): W,H,TAU,rnd,G,S,eDmg,aimAt,bossFire(e,ang,speed,kind,dmgMult,ox,oy),mkEnemy,spawnInvaderGroup,
  *   damagePlayer,addText,banner,SFX,wallsAlive. Bullet kinds: orb|bolt|zig|laser|big|snipe. */
 IV.content.bosses.push(
- {id:'dread',name:'DREADNOUGHT',unlock:{wave:5},hp:14,body:1,escorts:true,palette:'scheme',
+ {id:'dread',name:'DREADNOUGHT',tier:'standard',unlock:{wave:5},hp:14,body:1,escorts:true,palette:'scheme',
   half:["dd...........","dXd........gw","dXXd......gXX",".dXXd....gXXX",".dXXXdddgXXdd","..dXXXXXXXdYY","..dXXddXXdYYy","...dXdwdXXdYY","...dXdddXXXdd","....dXXXXXXXX",".....dXXdXXdX","......dXd.dXr",".......d...dr","............r"],
   setup(e,A){const hh=e.h/2;e.parts.push({kind:'weak',ox:0,oy:hh-6,w:8,h:12,mult:2,eye:{oy:hh-6,c:'#ff4d5e'}});},
   update(e,dt,A){const G=A.G,p2=e.phase===2;
    e.tx=A.W/2+Math.sin(G.t*0.7)*50;e.ty=42+Math.sin(G.t*1.3)*8;
    if(e.a1<=0){e.a1=p2?1.6:1.3;const a=A.aimAt(e.x,e.y);for(let i=0;i<5;i++)A.bossFire(e,a+(i-2)*0.22,72);}
    if(p2&&e.a2<=0){e.a2=0.11;e.ang+=0.47;A.bossFire(e,e.ang,52,'orb',0.8,0,0);A.bossFire(e,e.ang+Math.PI,52,'orb',0.8,0,0);}}},
- {id:'galaga',name:'BOSS GALAGA',unlock:{wave:10},hp:13,body:1,escorts:false,
+ {id:'galaga',name:'BOSS GALAGA',tier:'standard',unlock:{wave:10},hp:13,body:1,escorts:false,
   half:["e......y","ee....yy","eel..lyy",".eellyry","..elllyy","...llbbw","..lllbbb",".lllebbb","lllee.bb","ll.e..lb","l..e..l.","...e...l"],
   setup(e,A){const hh=e.h/2;e.parts.push({kind:'weak',ox:0,oy:hh-7,w:8,h:14,mult:2,eye:{oy:hh-9,c:'#ffe066'}});},
   update(e,dt,A){const G=A.G,P=G.p,S=A.S,p2=e.phase===2;
@@ -34,14 +36,14 @@ IV.content.bosses.push(
   draw(e,A,ctx){if(!(e.beam>0))return;const G=A.G,H=A.H,bw=e.beamW||0,top=e.y+e.h/2;
    for(let y=top;y<H;y+=2){const k=(y-top)/(H-top),w=Math.round(4+bw*k);ctx.globalAlpha=((y+(G.t*40|0))%6<3)?0.45:0.2;ctx.fillStyle=(y%4<2)?'#7fe7ff':'#2a6fdb';ctx.fillRect(Math.round(e.x-w/2),y,w,1);}
    ctx.globalAlpha=1;}},
- {id:'ufo',name:'MOTHERSHIP',unlock:{wave:15},hp:15,body:0.6,escorts:false,palette:{r:'X'},
+ {id:'ufo',name:'MOTHERSHIP',tier:'standard',unlock:{wave:15},hp:15,body:0.6,escorts:false,palette:{r:'X'},
   half:["...........ddddd","........dddrrrrr","......ddrrrrrrrr","....ddrrwrrwrrwr","..ddrrrrrrrrrrrr","ddrrrrrrrrrrrrrr",".dddyddyddyddydd","...ddddddddddddd",".........ddccccc","..........dddddd"],
   setup(e,A){const hh=e.h/2;e.ty=34;e.parts.push({kind:'weak',ox:0,oy:hh-4,w:12,h:8,mult:2.5,eye:{oy:hh-3,c:'#7fe7ff'}});},
   update(e,dt,A){const G=A.G,W=A.W,p2=e.phase===2;
    e.ty=34;e.tx=e.x+e.dirx*60;if(e.x>W-e.w/2-2)e.dirx=-1;if(e.x<e.w/2+2)e.dirx=1;
    if(e.a1<=0){e.a1=p2?0.3:0.45;A.bossFire(e,Math.PI/2,48,'zig',0.9,A.rnd(-e.w/2+6,e.w/2-6),e.h/2-2);}
    if(p2&&e.a2<=0){e.a2=2.4;const a=A.aimAt(e.x,e.y);A.bossFire(e,a,90,'bolt',1,-8);A.bossFire(e,a,90,'bolt',1,8);if(G.marches.length<1)A.spawnInvaderGroup(8,false);}}},
- {id:'core',name:'BIG CORE',unlock:{wave:20},hp:12,body:0.15,escorts:true,
+ {id:'core',name:'BIG CORE',tier:'standard',unlock:{wave:20},hp:12,body:0.15,escorts:true,
   half:["............gg","........gggggd","....gggggddddd","..ggddddddgggb","gggddddddgbbbc","gdddddddgbbccw","gggddddddgbbbc","..ggddddddgggb","....gggggddddd","........gggggd","............gg"],
   setup(e,A){const hh=e.h/2,hp=e.maxHp;e.ty=36;
    for(const k of [4,10,16])e.parts.push({kind:'wall',ox:0,oy:hh+k,w:14,h:4,hp:hp*0.1,maxHp:hp*0.1,flash:0});
@@ -51,7 +53,7 @@ IV.content.bosses.push(
    const open=!A.wallsAlive(e);if(open&&e.phase===1){e.phase=2;A.banner('CORE EXPOSED','#7fe7ff',1.5);A.SFX.alarm();}
    if(e.a1<=0){e.a1=p2?1.0:1.7;for(const ox of [-22,-12,12,22])A.bossFire(e,Math.PI/2,120,'laser',1,ox,e.h/2);}
    if(p2&&e.a2<=0){e.a2=1.4;for(const ox of [-22,22])A.bossFire(e,A.aimAt(e.x+ox,e.y),110,'laser',1,ox,e.h/2);}}},
- {id:'bio',name:'XENO BIOMECH',unlock:{wave:25},hp:10,body:0.6,escorts:true,
+ {id:'bio',name:'XENO BIOMECH',tier:'standard',unlock:{wave:25},hp:10,body:0.6,escorts:true,
   half:["..p.........",".ppp......vv","pp.pp...vvpp","p...ppvvppee","....pppppeel","...ppeppeell","..ppeepppell","..peep.ppeyy","..pep..ppyoy","...p...pppyy",".......ppppe","........pp.p"],
   setup(e,A){const hh=e.h/2;e.ty=36;e.tail=[];for(let i=0;i<5;i++){const p={kind:'block',ox:0,oy:0,w:6,h:6,seg:i};e.tail.push(p);e.parts.push(p);}
    e.parts.push({kind:'weak',ox:0,oy:hh-6,w:10,h:12,mult:2.5,eye:{oy:2,c:'#ffe066'}});},
@@ -319,7 +321,7 @@ IV.content.bosses.push(
   e.breakT-=dt;if(e.breakT<=0){e.breaking=0;A.nextPhase(e);}
  }
  IV.content.bosses.push({
-  id:'maw',name:'THE MAW',unlock:{wave:90,sector:10},hp:8,body:0,escorts:false,final:true,phaseLock:true,
+  id:'maw',name:'THE MAW',tier:'mega',fromWave:91,phases:5,unlock:{wave:90,sector:10},hp:8,body:0,escorts:false,phaseLock:true,
   half:['...vvvvvvv','..veeeeeev','.veeeeweev','veelllleev','vellwwwlev','veelllleev','.veeeeeeev','..vpppppev','...ppppppv','....pppp..','.....pp...','......p...'],
   setup(e,A){
    const f=e.form=e.form||1;

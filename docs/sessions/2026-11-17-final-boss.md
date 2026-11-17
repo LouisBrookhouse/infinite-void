@@ -1,9 +1,11 @@
 ---
 created: 2026-11-17T11:47:27Z
-intent: Ship THE MAW, the sector 10 five-phase final boss, with the Eidolon skin and an automatic Warp Jump.
+intent: Historical record of shipping THE MAW. As of v1.1.4 it is a mega boss and clearing it continues the run.
 durable_promoted: true
 ---
 # THE MAW
+
+> As of v1.1.4, THE MAW is a mega boss and clearing it continues the run. This note is the record of the day it shipped. See DESIGN.md.
 
 ## Intent
 Owner request, pulled ahead of roadmap R01. A giant multi-part boss at sector 10 wave 1 (wave 91) that lasts five waves, breaks tentacle by tentacle, awards a ship skin once, and auto warp-jumps. Fresh saves must not see it. R01 stays the next unticked item.
