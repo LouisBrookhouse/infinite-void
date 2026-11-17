@@ -61,21 +61,21 @@ One boss persists across the five waves. The HUD reads `FINAL BOSS - PHASE n/5` 
 
 Each phase has a 90 second clock. A hull breach or a timeout restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. The usual lose rule (drop one wave) applies only outside waves 91-95.
 
-The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). Phase 3 opens the eye after both tentacles sever; emptying the eye calls `nextPhase` and does not end the fight (`holdKill`). Phase 5 leaves the core exposed at 42% damage taken while any tentacle lives, then at full damage. Killing that core is the only kill.
+The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). While that armor is up, the ship's guns, homing missiles and drones aim at a live tentacle (nearest, then lowest health) and do not spend shots on the core. Phase 3 has no tentacles: the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the guns switch to the mouth once the tentacles are gone. Killing that mouth is the only kill.
 
 | Phase | Wave | What breaks | Pattern |
 |---|---|---|---|
-| 1 | 91 | 4 outer tentacles, 5.5×eHP each (22×eHP) | Tip fans, one slam at a time. Core armored |
-| 2 | 92 | 4 armoured regrowth tentacles, 6×eHP at 0.75 damage taken | Spore shots, scout minions, slams |
-| 3 | 93 | 2 long tentacles, 6.5×eHP each, then the eye at 10×eHP | After the eye opens, a sweeping laser. Eye break goes to phase 4 |
-| 4 | 94 | 6 fast tentacles, about 4.2-4.4×eHP | Faster tip fans, fighter minions, slams |
-| 5 | 95 | 4 tentacles, 4.2 or 4.6×eHP, then the core at 16×eHP | Spinning bullet ring, tip bolts. Core death ends the fight |
+| 1 | 91 | 4 Hungry tentacles, 5.5×eHP each (22×eHP) | Tip fans, one slam at a time. Core armored |
+| 2 | 92 | 4 armoured Hungry, 6×eHP at 0.75 damage taken | Spore shots, scout minions, slams |
+| 3 | 93 | 2 eyes, 11.5×eHP each (23×eHP) | Each open eye sweeps a laser. Both eyes burst to reach phase 4 |
+| 4 | 94 | 4 fast Hungry, 6.4×eHP each (25.6×eHP) | Faster tip fans, fighter minions, slams. The wall sits lower |
+| 5 | 95 | 4 Hungry, 4.4×eHP each, then the mouth at 16×eHP | Spinning bullet ring, tip bolts. Mouth death ends the fight |
 
-Tentacles are jointed segments, pooled on the boss. Each has its own HP bar. They are drawn as thick tapering curves on one screen-filling silhouette: a mantle across the top of the playfield, outer limbs framing the side edges, and the other limbs hanging in the gaps. Phase 4 uses all six of those curves. Fewer phases use a subset, with the same hit points as before. A severed tentacle leaves a stump and the broken length tumbles away in one piece. Idle contact damage is the tip only; a slam hits along the arm. Enemy bullets during the fight are pooled and capped.
+The body is a wall of flesh across the full width of the top of the playfield: ribbed meat, veins, teeth, two bloodshot eyes and a central mouth. Four thick Hungry tethers hang from the wall and end in snapping mouths. They are jointed segments on a fixed-length chain, pooled on the boss, and each segment's hitbox covers that segment. A severed tether leaves a stump; the broken length tumbles away in one piece. Idle contact damage is the tip only; a slam hits along the arm. Enemy bullets during the fight are pooled and capped. The hit-point totals above are the same budget as 1.1.1.
 
 On the kill: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidolon`), a short victory plays, then the existing Warp Jump runs. The bounty is `max(15, floor(normal Dark Matter × 0.5))` added to the normal gain. Later runs can fight the Maw again. The skin is not granted twice. Reset All locks it again.
 
-`?final=1` jumps to wave 91 and sets `noSave`, so that tab cannot write the save. `?kit=1` (only together with `final=1`) loads a strong kit and sets `G.debugMul` so shots can dent wave-91 HP. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
+`?final=1` jumps to wave 91 and sets `noSave`, so that tab cannot write the save. `?kit=1` (only together with `final=1`) loads a strong kit and sets `G.debugMul` from `eHP * 24/25` over primary DPS, high enough for that idle kit to finish each Maw phase inside the 90 second clock. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
 
 ## Balance philosophy
 - Enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.

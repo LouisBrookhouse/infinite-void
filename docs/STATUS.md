@@ -1,18 +1,18 @@
 # Status
 
-_Last updated: 2026-11-17 (v1.1.1 tentacle art on this branch, v1.1.0 on main)_
+_Last updated: 2026-11-17 (v1.1.2 wall of flesh on this branch, v1.1.1 live)_
 
 ## Version state
-- **Implemented:** 1.1.1 on `daily/2026-11-17-maw-tentacles`. Visual pass only: thick tapering Maw tentacles. HP, phases, gates and early-wave numbers are unchanged.
-- **Tested:** `npm test` on this branch, plus a headless Chromium pass of all 5 phases and fresh screenshots. See [sessions/2026-11-17-maw-tentacles.md](sessions/2026-11-17-maw-tentacles.md).
-- **Merged:** 1.1.0 THE MAW is on `main` (PR #2, squash-merged). 1.1.1 is not merged. This session does not open the PR.
-- **Live:** follows the Pages deploy of `main`. 1.1.1 is not live until that PR merges and the deploy job finishes.
+- **Implemented:** 1.1.2 on `daily/2026-11-17-maw-wof`. THE MAW is a wall of flesh with four Hungry tentacles, and guns aim at those parts while the core is armored. The phase HP budget is unchanged.
+- **Tested:** `npm test` on this branch. Headless Chromium at `?final=1&kit=1` cleared all 5 phases with zero taps in about 180 seconds, no console errors, 61 fps. See [sessions/2026-11-17-maw-wof.md](sessions/2026-11-17-maw-wof.md).
+- **Merged:** 1.1.1 is on `main` (PR #3). 1.1.2 is not merged. This session does not open the PR.
+- **Live:** 1.1.1. 1.1.2 is not live until that PR merges and the deploy job finishes.
 
 ## Live
-- **Version on main:** 1.1.0. This branch prepends 1.1.1 in `src/content/changelog.js`.
+- **Version on main:** 1.1.1. This branch prepends 1.1.2 in `src/content/changelog.js`.
 - **URL:** https://louisbrookhouse.github.io/infinite-void/ (deployed by `.github/workflows/ci.yml` on push to `main`).
 - **Live-verified 2026-11-17:** v1.0.0 returned HTTP 200 with zero console errors in headless Chrome, and gameplay rendered (CI run 44069366381: test and deploy green, deploy live-check passed). v1.1.0 is not on the live site yet.
-- **Content on main:** 7 guns, 10 enemy types, 6 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. 1.1.1 changes no counts.
+- **Content on main:** 7 guns, 10 enemy types, 6 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. 1.1.2 changes no counts.
 
 ## Automation
 - CI (`test` job): docs/session-note/policy validator, unit tests, Playwright suites (smoke, save, migration, gating, balance guardrails).

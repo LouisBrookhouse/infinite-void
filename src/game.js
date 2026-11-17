@@ -319,7 +319,7 @@ function nextPhase(e){
  e.form=(e.form|0)+1;e.dead=false;G.bossT=90;G.flash=1;G.shake=11;
  for(const o of G.enemies)if(o!==e)o.dead=true;
  clearEB();SFX.roar();
- banner(['','','TENDRILS REGROW','THE EYE OPENS','MAW ENRAGED','CORE EXPOSED'][e.form]||('PHASE '+e.form),'#ff5ccf',1.7);
+ banner(['','','HUNGRY REGROW','THE EYES OPEN','WALL LUNGES','MOUTH OPENS'][e.form]||('PHASE '+e.form),'#ff5ccf',1.7);
  toast('FINAL BOSS - PHASE '+e.form+'/5');
  if(e.def.setup)e.def.setup(e,A);
  e._phasing=false;
@@ -382,9 +382,24 @@ function releaseCaptured(rescued){if(G.captured>0&&rescued)addText('DRONE RESCUE
 function addCredits(n){S.credits+=n;S.totalCredits+=n;G.bucketCur+=n;}
 
 /* ---------- player weapons ---------- */
+function aimPoint(e){
+ if(!e)return {x:W/2,y:H/2,part:false};
+ if(e.boss&&e.bodyMult<1&&e.limbs){let best=null,score=1e9;
+  for(const L of e.limbs){if(!(L.hp>0)||!L.segs||!L.segs.length)continue;let nd=1e9,pt=null;
+   for(const s of L.segs){const x=e.x+s.x,y=e.y+s.y,d=(x-G.p.x)*(x-G.p.x)+(y-G.p.y)*(y-G.p.y);if(d<nd){nd=d;pt={x,y};}}
+   if(!pt)continue;const sc=(L.maxHp?L.hp/L.maxHp:1)*360+Math.sqrt(nd);if(sc<score){score=sc;best=pt;}}
+  if(best)return {x:best.x,y:best.y,part:true};}
+ if(e.parts){let best=null,nd=1e9;for(const p of e.parts){if(p.kind!=='eye'||!(p.hp>0))continue;const x=e.x+p.ox,y=e.y+p.oy,d=(x-G.p.x)*(x-G.p.x)+(y-G.p.y)*(y-G.p.y);if(d<nd){nd=d;best={x,y};}}
+  if(best)return {x:best.x,y:best.y,part:true};}
+ return {x:e.x,y:e.y,part:false};
+}
 function shootGun(id,sec){
  const P=G.p,m=S.u.multi,info=gunInfo(id,S.wl[id]||1,sec),dmg=info.shot,n=info.proj;
- const push=b=>{b.py=b.y;b.dmg=dmg;G.pb.push(b);};
+ let tgt=null;for(const e of G.enemies)if(targetable(e)&&e.y>0&&(!tgt||e.y>tgt.y))tgt=e;
+ const aim=tgt?aimPoint(tgt):null;
+ const push=b=>{b.py=b.y;b.dmg=dmg;
+  if(aim&&aim.part){const sp=Math.hypot(b.vx,b.vy);if(sp>0){const cur=Math.atan2(b.vy,b.vx),want=Math.atan2(aim.y-b.y,aim.x-b.x),dir=want+(cur+Math.PI/2);b.vx=Math.cos(dir)*sp;b.vy=Math.sin(dir)*sp;}}
+  G.pb.push(b);};
  WMAP[id].fire(A,{x:P.x,y:P.y-6,n,m,push,sec:!!sec});
  addPart(P.x,P.y-7,0,0,0.05,'#ffffff',2);SFX.gun(id);
 }
@@ -395,13 +410,17 @@ function targetable(e){return !e.dead&&e.cloak<0.6&&e.y>-2;}
 function rectHit(b,cx,cy,hw,hh){const m=b.r||0,y0=Math.min(b.y,b.py),y1=Math.max(b.y,b.py);return Math.abs(b.x-cx)<=hw+m&&y1>=cy-hh-m&&y0<=cy+hh+m;}
 function findHit(e,b){
  if(e.dead||e.cloak>0.6)return null;
- if(e.parts)for(const p of e.parts){if(p.kind==='wall'&&p.hp<=0)continue;if(p.kind==='limb'){const L=e.limbs&&e.limbs[p.li];if(!L||L.hp<=0)continue;}if(rectHit(b,e.x+p.ox,e.y+p.oy,p.w/2,p.h/2))return p;}
+ if(e.parts)for(const p of e.parts){if(p.kind==='wall'&&p.hp<=0)continue;if(p.kind==='limb'){const L=e.limbs&&e.limbs[p.li];if(!L||L.hp<=0)continue;}if(p.kind==='eye'&&!(p.hp>0))continue;if(rectHit(b,e.x+p.ox,e.y+p.oy,p.w/2,p.h/2))return p;}
  if(rectHit(b,e.x,e.y,e.w/2,e.h/2))return 'body';
  return null;
 }
 function applyHit(e,where,dmg,canCrit,hx,hy){
  let crit=false;if(canCrit&&Math.random()<G.s.crit){dmg*=3;crit=true;}
  if(where&&where.kind==='limb'){const L=e.limbs&&e.limbs[where.li];if(!L||L.hp<=0)return 'miss';L.flashSi=where.si|0;hurtLimb(e,L,dmg,false);return 'hit';}
+ if(where&&where.kind==='eye'){if(!(where.hp>0))return 'miss';let hit=dmg;if(G.debugMul>1)hit*=G.debugMul;where.hp-=hit;where.flash=0.12;
+  addText(fmt(hit),e.x+where.ox+rnd(-3,3),e.y+where.oy,'#ffb0b0');
+  if(where.hp<=0){where.hp=0;explode(e.x+where.ox,e.y+where.oy,1.4,'#ff4d5e');addText('EYE BURST',e.x+where.ox,e.y+where.oy-8,'#ff4d5e',true);G.shake=Math.max(G.shake,6);SFX.boom();}
+  else SFX.hit();return 'hit';}
  if(where==='body'||(where&&where.kind==='core')){
   const m=e.bodyMult!=null?e.bodyMult:1;
   if(m<=0){if(G.t-(e.armAt||0)>0.4){e.armAt=G.t;addText('ARMORED',e.x,e.y-10,'#7383bb');SFX.tink();}return 'armor';}
@@ -546,7 +565,8 @@ function update(dt){
  if(P.shieldDelay>0)P.shieldDelay-=dt;else if(P.shield<s.shieldMax)P.shield=Math.min(s.shieldMax,P.shield+s.shieldMax*0.25*dt);
  P.flash-=dt;
  let tgt=null;for(const e of G.enemies)if(targetable(e)&&(!tgt||e.y>tgt.y))tgt=e;
- const tx=tgt?tgt.x+Math.sin(G.t*1.7)*6:W/2+Math.sin(G.t*0.8)*30;
+ const tp=tgt?aimPoint(tgt):null;
+ const tx=tp?(tp.part?tp.x:tp.x+Math.sin(G.t*1.7)*6):W/2+Math.sin(G.t*0.8)*30;
  P.x=clamp(P.x+clamp(tx-P.x,-45*dt,45*dt),8,W-8);P.y=H-30+Math.sin(G.t*2)*1.5;
  const hasT=G.enemies.some(e=>targetable(e)&&e.y>0);
  for(const slot of ['pri','sec']){const id=S[slot];if(!id||!(S.wl[id]>=1))continue;const iv=gunInterval(id,slot==='sec');
@@ -556,7 +576,7 @@ function update(dt){
  while(G.droneT.length<nd)G.droneT.push(rnd(0,1));
  for(let i=0;i<nd;i++){G.droneT[i]-=dt;
   if(G.droneT[i]<=0&&hasT){G.droneT[i]=0.9;const live=G.enemies.filter(e=>targetable(e)&&e.y>0);const e=pick(live);
-   const a=G.droneA+i*TAU/nd,dx0=P.x+Math.cos(a)*17,dy0=P.y+Math.sin(a)*8-2;const ang=Math.atan2(e.y-dy0,e.x-dx0);
+   const a=G.droneA+i*TAU/nd,dx0=P.x+Math.cos(a)*17,dy0=P.y+Math.sin(a)*8-2;const pt=aimPoint(e);const ang=Math.atan2(pt.y-dy0,pt.x-dx0);
    G.pb.push({x:dx0,y:dy0,py:dy0,vx:Math.cos(ang)*180,vy:Math.sin(ang)*180,dmg:s.droneDmg,k:'drone'});}}
  // spawning
  if(!G.isBoss&&G.toSpawn>0){G.spawnT-=dt;if(G.spawnT<=0){let alive=0;for(const e of G.enemies)if(e.counts)alive++;if(alive<maxAliveOf(S.wave)){spawnWaveEnemy();G.spawnT=rnd(0.25,0.7)*Math.max(0.2,1-S.wave/70);}}}
@@ -566,8 +586,8 @@ function update(dt){
  for(const e of G.enemies){if(e.boss||!e.T.fire||e.y<4||e.cloak>0.3)continue;if(e.ai==='dive'&&e.state==='dive')continue;e.fireT-=dt;if(e.fireT<=0){e.fireT=rnd(2.6,4.4)/e.T.fire/(1+S.wave/80);enemyFire(e);}}
  // player bullets
  for(let i=G.pb.length-1;i>=0;i--){const b=G.pb[i];b.py=b.y;
-  if(b.homing){b.t+=dt;let best=b.tg&&!b.tg.dead&&targetable(b.tg)?b.tg:null;if(!best){let bd=1e9;for(const e of G.enemies){if(!targetable(e))continue;const d=Math.hypot(e.x-b.x,e.y-b.y);if(d<bd){bd=d;best=e;}}b.tg=best;}
-   const sp=Math.min(60+b.t*260,190);let ang=Math.atan2(b.vy,b.vx);if(best&&b.t>0.12){const want=Math.atan2(best.y-b.y,best.x-b.x);const da=((want-ang+Math.PI*3)%TAU)-Math.PI;ang+=clamp(da,-7*dt,7*dt);}
+  if(b.homing){b.t+=dt;let best=b.tg&&!b.tg.dead&&targetable(b.tg)?b.tg:null;if(!best){let bd=1e9;for(const e of G.enemies){if(!targetable(e))continue;const p=aimPoint(e),d=Math.hypot(p.x-b.x,p.y-b.y);if(d<bd){bd=d;best=e;}}b.tg=best;}
+   const sp=Math.min(60+b.t*260,190);let ang=Math.atan2(b.vy,b.vx);if(best&&b.t>0.12){const p=aimPoint(best);const want=Math.atan2(p.y-b.y,p.x-b.x);const da=((want-ang+Math.PI*3)%TAU)-Math.PI;ang+=clamp(da,-7*dt,7*dt);}
    b.vx=Math.cos(ang)*sp;b.vy=Math.sin(ang)*sp;if(Math.random()<0.5)addPart(b.x,b.y,0,0,0.3,'#8a94a6',1);if(b.t>4){rmAt(G.pb,i);continue;}}
   if(b.k==='ring')b.r=Math.min(b.rmax,b.r+22*dt);
   if(b.k==='wave')b.t+=dt;
@@ -908,7 +928,7 @@ function applyDebugQuery(){
  S.d.over=4;S.d.nano=3;S.d.quantum=4;S.credits=1e12;G._kit=1;
 }
 const hadSave=load();applyDebugQuery();recalc();
-if(G._kit){const want=eHP(S.wave)*8/25,have=Math.max(1,gunDps(S.pri,S.wl[S.pri]||1,false));G.debugMul=Math.max(1,want/have);}
+if(G._kit){const want=eHP(S.wave)*24/25,have=Math.max(1,gunDps(S.pri,S.wl[S.pri]||1,false));G.debugMul=Math.max(1,want/have);}
 buildStore();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;startWave();fit();refreshStore();
 if(hadSave){grantOffline((Date.now()-S.last)/1000);save(true);}
 else{S.seenVersion=VERSION;modal('INFINITE VOID','Your ship fires automatically.<br><span style="color:#ff5ccf">TAP ENEMIES</span> for bonus damage, aim for glowing <span style="color:#ff9f1c">WEAK POINTS</span> on bosses.<br>Spend <span style="color:#ffe066">¢ credits</span> on ship upgrades and new <span style="color:#7fe7ff">GUNS</span>, then <span style="color:#ff5ccf">WARP JUMP</span> for Dark Matter.<br><span style="font-size:11px;color:#7383bb">Progress autosaves. Use SAVE/STATS &gt; EXPORT for a backup.</span>',[{t:'LAUNCH',fn:()=>save()}]);}
