@@ -59,7 +59,7 @@ Sector 10 wave 1 is wave 91 (`sector = floor((wave-1)/10)+1`). `isFinalWave` is 
 
 One boss persists across the five waves. The HUD reads `FINAL BOSS - PHASE n/5` with `n = wave-90`. A phase ends when its break condition calls `nextPhase` (or, on phase 5, when the core dies). The wave counter advances then. No regular spawns run during the encounter.
 
-Each phase has a 90 second clock. A hull breach or a timeout restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. The usual lose rule (drop one wave) applies only outside waves 91-95.
+Each phase has a 90 second clock. A hull breach does not restart the phase. It is an emergency Warp Jump, same as any other wave, with no Maw bounty and no Eidolon. A timeout still restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. Outside the Maw, a boss that escapes still drops one wave. A hull breach never does.
 
 The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). While that armor is up, the ship's guns, homing missiles and drones aim at a live tentacle (nearest, then lowest health) and do not spend shots on the core. Phase 3 has no tentacles: the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the guns switch to the mouth once the tentacles are gone. Killing that mouth is the only kill.
 
@@ -76,6 +76,13 @@ The body is a wall of flesh across the full width of the top of the playfield: r
 On the kill: `S.finalKills` increments, Eidolon is granted once (`S.skins.eidolon`), a short victory plays, then the existing Warp Jump runs. The bounty is `max(15, floor(normal Dark Matter × 0.5))` added to the normal gain. Later runs can fight the Maw again. The skin is not granted twice. Reset All locks it again.
 
 `?final=1` jumps to wave 91 and sets `noSave`, so that tab cannot write the save. `?kit=1` (only together with `final=1`) loads a strong kit and sets `G.debugMul` from `eHP * 24/25` over primary DPS, high enough for that idle kit to finish each Maw phase inside the 90 second clock. Real runs and the balance sim leave `debugMul` at 1. `?mute=1` mutes that session. Sector 10 still uses the cycling sector art (THE DEEP), because only five sector pictures exist.
+
+## Death
+A hull breach runs the Warp Jump reset immediately: credits, ship upgrades and gun levels clear, unlocked guns stay, and the next run starts at wave `1 + 5 * Warp Drive`. The banner reads `HULL BREACH - EMERGENCY WARP`, and a toast shows the Dark Matter earned.
+
+The payout is `dmGain()` at that moment, the same number the Warp Jump button would pay, with no Maw bounty added. `dmGain()` is 0 until `maxWave` is at least 20, so an early death pays nothing. A zero payout still resets the run, but it does not increment `S.warps`, so it cannot open warp-gated upgrades. Once `dmGain()` is above 0, the death increments `S.warps` and banks that Dark Matter, then sets `maxWave` back to 0, so a second death cannot farm more than one voluntary warp at the same peak.
+
+Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged.
 
 ## Balance philosophy
 - Enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
