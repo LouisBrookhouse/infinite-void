@@ -47,6 +47,7 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 
 
 ## Shipped
+- [x] **F03 [mechanic] Death is an emergency warp** (v1.1.3, 2026-11-17). A hull breach runs a Warp Jump and pays the same Dark Matter. No wave retreat. Dying to THE MAW does not restart the phase or pay the bounty.
 - [x] **R33b [boss] Maw, wall of flesh** (v1.1.2, 2026-11-17). Four Hungry tentacles, two eyes, a mouth. Guns aim at the live parts. Same HP budget and gates as R33.
 - [x] **R33a [art] Maw tentacles** redraw. Thick tapering limbs on the screen-filling silhouette. Same HP, phases and gates as R33. (v1.1.1, 2026-11-17)
 - [x] **R33 [boss] THE MAW** (sector 10, waves 91-95). Owner request, shipped ahead of R01. Five-phase tentacle boss, Eidolon skin, auto Warp Jump with a Dark Matter bounty. Not R30. (v1.1.0, 2026-11-17)

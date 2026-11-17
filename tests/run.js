@@ -226,6 +226,61 @@ async balance(){
  log('  balance: '+GR.checkpoints.map(c=>{const r=report.minutes.find(x=>x.min===c.min);return `min${c.min} wave ${r.wave} onScreen ${r.onScreenAvg} TTK ${r.focusTTK}s`;}).join(' | ')+(report.warp?` | warp +${report.warp.gain}DM`:'')+` | idle best ${ir.best}`);
  assert.deepStrictEqual(fails,[],'balance guardrails');
 },
+async death(){
+ const {ctx,page,errors}=await newPage();
+ await page.evaluate(()=>__IV.pause(true));
+ await dismissModal(page);
+ const r=await page.evaluate(()=>{
+  const I=__IV,S=I.S,G=I.G;
+  const toast=()=>document.getElementById('toast').textContent;
+  const saved=()=>JSON.parse(localStorage.getItem(I.KEY));
+  S.wave=8;S.maxWave=6;S.best=8;S.credits=4000;S.u.dmg=5;S.wl.pulse=3;S.dm=0;S.dmTotal=0;S.warps=0;S.deaths=0;S.finalKills=0;S.skins.eidolon=0;S.d.warp=0;
+  I.recalc();
+  const earlyGain=I.dmGain();
+  I.die();
+  const early={gain:earlyGain,wave:S.wave,max:S.maxWave,credits:S.credits,dmg:S.u.dmg,pulse:S.wl.pulse,dm:S.dm,warps:S.warps,deaths:S.deaths,banner:G.banner&&G.banner.txt,toast:toast(),save:saved()};
+  I.step(1/60);
+  S.wave=31;S.maxWave=30;S.best=31;S.credits=9000;S.u.dmg=6;S.wl.pulse=4;S.dm=0;S.dmTotal=0;S.warps=0;S.deaths=0;S.finalKills=0;S.skins.eidolon=0;
+  I.recalc();
+  const paidGain=I.dmGain();
+  I.die();
+  const paid={gain:paidGain,wave:S.wave,max:S.maxWave,credits:S.credits,dmg:S.u.dmg,pulse:S.wl.pulse,dm:S.dm,dmTotal:S.dmTotal,warps:S.warps,deaths:S.deaths,banner:G.banner&&G.banner.txt,toast:toast(),save:saved()};
+  I.step(1/60);
+  const banked=S.dm;
+  S.credits=250;S.u.dmg=3;S.maxWave=0;S.wave=4;
+  I.recalc();
+  const againGain=I.dmGain();
+  I.die();
+  const again={gain:againGain,dm:S.dm,warps:S.warps,credits:S.credits,dmg:S.u.dmg,deaths:S.deaths};
+  I.step(1/60);
+  S.wave=94;S.maxWave=93;S.best=94;S.credits=100;S.finalKills=0;S.skins.eidolon=0;S.u.dmg=2;
+  I.recalc();
+  const mawGain=I.dmGain();
+  I.die();
+  const maw={gain:mawGain,wave:S.wave,dm:S.dm-banked,warps:S.warps,kills:S.finalKills|0,skin:S.skins.eidolon|0,banner:G.banner&&G.banner.txt,save:saved()};
+  return {early,paid,again,maw};
+ });
+ assert.strictEqual(r.early.gain,0,'early death pays nothing');
+ assert.strictEqual(r.early.wave,1);assert.strictEqual(r.early.max,0);assert.strictEqual(r.early.credits,0);assert.strictEqual(r.early.dmg,0);assert.strictEqual(r.early.pulse,1);
+ assert.strictEqual(r.early.dm,0);assert.strictEqual(r.early.warps,0,'a zero payout does not count as a Warp Jump');
+ assert.strictEqual(r.early.deaths,1);assert.strictEqual(r.early.banner,'HULL BREACH - EMERGENCY WARP');
+ assert.ok(r.early.toast.includes('DARK MATTER'));
+ assert.strictEqual(r.early.save.wave,1);assert.strictEqual(r.early.save.warps,0);assert.strictEqual(r.early.save.dm,0);assert.strictEqual(r.early.save.deaths,1);
+ assert.ok(r.paid.gain>0,'wave 30 has Dark Matter');
+ assert.strictEqual(r.paid.dm,r.paid.gain,'forced warp pays the voluntary amount');
+ assert.strictEqual(r.paid.dmTotal,r.paid.gain);assert.strictEqual(r.paid.warps,1);assert.strictEqual(r.paid.wave,1);assert.strictEqual(r.paid.max,0);
+ assert.strictEqual(r.paid.credits,0);assert.strictEqual(r.paid.dmg,0);assert.strictEqual(r.paid.pulse,1);assert.strictEqual(r.paid.deaths,1);
+ assert.strictEqual(r.paid.banner,'HULL BREACH - EMERGENCY WARP');
+ assert.strictEqual(r.paid.save.dm,r.paid.gain);assert.strictEqual(r.paid.save.warps,1);assert.strictEqual(r.paid.save.wave,1);
+ assert.strictEqual(r.again.gain,0);assert.strictEqual(r.again.dm,r.paid.gain,'a second death cannot farm more Dark Matter');
+ assert.strictEqual(r.again.warps,1);assert.strictEqual(r.again.credits,0);assert.strictEqual(r.again.dmg,0);assert.strictEqual(r.again.deaths,2);
+ assert.ok(r.maw.gain>0);assert.strictEqual(r.maw.dm,r.maw.gain,'Maw death pays no bounty');
+ assert.strictEqual(r.maw.kills,0);assert.strictEqual(r.maw.skin,0);assert.strictEqual(r.maw.wave,1);
+ assert.strictEqual(r.maw.banner,'HULL BREACH - EMERGENCY WARP');
+ assert.strictEqual(r.maw.save.finalKills,0);assert.strictEqual(r.maw.save.wave,1);
+ noErrors(errors,'death');
+ await ctx.close();
+},
 };
 
 (async()=>{

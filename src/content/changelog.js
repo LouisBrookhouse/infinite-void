@@ -3,6 +3,18 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.1.3',date:'2026-11-17',title:'EMERGENCY WARP',
+  added:[
+   'A hull breach is now an emergency Warp Jump. You keep the Dark Matter a normal warp would have paid.',
+  ],
+  balance:[
+   'Dying before wave 20 pays no Dark Matter and does not count as a Warp Jump. It still resets the run.',
+   'Base hull is 32, up from 20, so the first bosses do not end a run by themselves.',
+  ],
+  fixed:[
+   'Death no longer sends you back one wave, and dying to THE MAW no longer restarts the phase.',
+  ],
+  gate:'Every wave. Dark Matter still starts at wave 20.'},
  {version:'1.1.2',date:'2026-11-17',title:'WALL OF FLESH',
   added:[],
   balance:[
