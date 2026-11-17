@@ -3,6 +3,15 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.1.0',date:'2026-11-17',title:'THE MAW',
+  added:[
+   'THE MAW, a five-phase final boss, waits at Sector 10 wave 1. Break its tentacles, then the eye.',
+   'Clearing the Maw awards the Eidolon ship skin and Warp Jumps you, with bonus Dark Matter.',
+  ],
+  balance:[
+   'Each Maw phase is about two normal bosses of health with a 90 second clock. Early waves are unchanged.',
+  ],
+  gate:'Sector 10 (wave 91). Eidolon is awarded once, on the kill.'},
  {version:'1.0.1',date:'2026-11-17',title:'FIRST AUTOMATIC UPDATE',
   added:[],
   balance:[],

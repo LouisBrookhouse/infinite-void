@@ -1,6 +1,6 @@
 # Roadmap: the daily update backlog
 
-How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping.
+How to use it: each day the agent takes the **first unticked item** (skipping only items whose prerequisites haven't shipped), ships it as ONE small gated update plus a rebalance, and ticks it here as `- [x] ... (v1.N.0, YYYY-MM-DD)`. The agent may add new items at the bottom or split big ones, and must keep each item small enough for a single day. The order runs from gates the player reaches early to gates they reach late, with meta systems once players start warping. An owner request can pull a later item forward. On 2026-11-17 the owner pulled THE MAW (R33) ahead of R01. R01 stays the next unticked item. R30 Void Leviathan is a different boss.
 
 Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission] [qol]**
 
@@ -43,5 +43,6 @@ Tags: **[enemy] [gun] [boss] [upgrade] [sector] [art] [mechanic] [meta] [mission
 - [ ] **R32 [qol] Statistics page v2**: per-gun kills, boss times and run history (warps 1).
 
 ## Shipped
+- [x] **R33 [boss] THE MAW** (sector 10, waves 91-95). Owner request, shipped ahead of R01. Five-phase tentacle boss, Eidolon skin, auto Warp Jump with a Dark Matter bounty. Not R30. (v1.1.0, 2026-11-17)
 - [x] **F01 Fix: reset no longer marks patch notes unread** (first pipeline check of auto-merge) (v1.0.1, 2026-11-17)
 - [x] **R00 Launch as INFINITE VOID**: data-driven registries, gates, patch notes, CI guardrails, auto-deploy (v1.0.0, 2026-11-17)
