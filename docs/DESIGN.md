@@ -49,7 +49,7 @@ Sprites use fixed palette letters, not sector X/Y. The layer is a 25×11 barge w
 One model for every fight. The ship moves horizontally toward the aim x. Primary guns fire their normal patterns from the ship. They are not turned toward a part.
 
 1. An enemy overlapping the hull (within about 10 by 12px) is the target. That is the only time something on top of the ship wins.
-2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth.
+2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. On Big Core and Xeno Biomech the aim x is a gap that still crosses the weak point. If a plate covers that column, the ship sits on the front plate until it breaks. Primary guns still fire straight.
 3. With no boss, an enemy below y = H-75 wins, then a mine field of 6 or more (the mine nearest the ship), then the lowest other enemy.
 
 Homing missiles curve toward the nearest target on their own. Drones pick a live enemy and fire toward its aim point. Neither has a boss-only rule or a Maw-only rule.
@@ -166,11 +166,20 @@ The payout is `dmGain()` at that moment, the same number the Warp Jump button wo
 Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged.
 
 ## Balance philosophy
-- Enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
+- Through wave 100, enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). After wave 100, health follows the late cap below and does not go back to 19% a wave. Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
 - Kills per wave and max alive enemies rise with the wave (`needOf`, `maxAliveOf`, capped at 150 and 110).
 - Player damage scaling is deliberately gentle (`wMult`, tap damage at 0.6+0.12/level, Spread Array as projectiles plus 50%).
 - A run should stall somewhere around waves 40-50 for an active player. That stall is the prompt to Warp Jump. After a warp the player should blast through early waves and pass their old best within ~10 minutes.
 - **Daily rebalance:** small, targeted numeric changes with sim evidence, at most ~3 knobs per day, each named in the changelog `balance` lines.
+
+### Late health cap (`HP_CAP_WAVE`)
+`HP_CAP_WAVE` is **125**. It lives next to `eHP` / `eDmg` in `src/game.js`. Do not remove it, and do not put 19% health growth back after wave 100. A pure clamp of the old curve at wave 125 freezes health at about 134× the wave-100 value (`hpRaw(125) / hpRaw(100)`). A developed save kills roughly 7×`eHP` in under 10 seconds at wave 100, so that freeze still leaves a boss up for many minutes and it escapes.
+
+Health uses the classic curve through wave 100 (`HP_BEND_WAVE`), including THE MAW. `eHP(100)` must stay equal to `hpRaw(100)`. From wave 100 to wave 125 health multiplies by `HP_LATE_MULT` (**3.5**), on a smooth log ramp. `eHP(125) = eHP(100) × 3.5`. At wave 126 and every wave after, `eHP` stays on that wave-125 value. Mines, guards, minions, standard bosses, elite bosses, and mega-boss parts all read `eHP`, so the cap covers them.
+
+Shot, ram, and mine-touch damage still use `eDmg`. Through wave 125 that is `1.11^(wave-1)`, same as before. After wave 125, damage grows by `DMG_LATE` (**1.12**) per wave, and by `HPK.sec` (**1.2**) for each sector past `sectorOf(125)`. That is the old per-sector health step, with a per-wave rate between the old 11% hit growth and the old 19% health growth. A full 19% per wave deleted the reference save on the next Big Core. Wave 140 damage is `1.12^15 × 1.2` (about 6.6×) wave-125 damage, at the same health.
+
+Big Core's three shields are offset, with a gap over the weak point, 8% of boss health each, and they return 11s after they break. Xeno Biomech's center plate has 3.2×`eHP`, covers the weak point, and returns 14s after it cracks. Side plates stay off that column. Auto-aim uses the gap, or the plate that blocks it.
 
 ### Guardrails (CI enforced, `tests/guardrails.json`)
 A deterministic seeded sim (greedy buyer, 8 taps/s) must satisfy:

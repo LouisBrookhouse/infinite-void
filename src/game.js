@@ -170,8 +170,20 @@ function gunDps(id,L,sec){const g=gunInfo(id,L,sec);return g.shot*g.proj*g.rate;
 const sectorOf=w=>Math.floor((w-1)/10);
 const needOf=w=>Math.min(12+Math.floor(w*0.9),150);
 const maxAliveOf=w=>Math.min(5+Math.floor(w*0.7),110);
-const eHP=w=>HPK.base*Math.pow(HPK.g,w-1)*Math.pow(HPK.sec,sectorOf(w))*(1+HPK.p*Math.min(w-1,HPK.pc));
-const eDmg=w=>Math.pow(1.11,w-1);
+const HP_CAP_WAVE=125,HP_BEND_WAVE=100,HP_LATE_MULT=3.5,DMG_LATE=1.12;
+const hpRaw=w=>HPK.base*Math.pow(HPK.g,w-1)*Math.pow(HPK.sec,sectorOf(w))*(1+HPK.p*Math.min(w-1,HPK.pc));
+const eHP=w=>{
+ const c=w>HP_CAP_WAVE?HP_CAP_WAVE:w<1?1:w;
+ if(c<=HP_BEND_WAVE)return hpRaw(c);
+ const u=(c-HP_BEND_WAVE)/(HP_CAP_WAVE-HP_BEND_WAVE);
+ return hpRaw(HP_BEND_WAVE)*Math.pow(HP_LATE_MULT,u);
+};
+const eDmg=w=>{
+ const c=w>HP_CAP_WAVE?HP_CAP_WAVE:w<1?1:w;
+ let d=Math.pow(1.11,c-1);
+ if(w>HP_CAP_WAVE)d*=Math.pow(DMG_LATE,w-HP_CAP_WAVE)*Math.pow(HPK.sec,sectorOf(w)-sectorOf(HP_CAP_WAVE));
+ return d;
+};
 const eRew=w=>HPK.rb*Math.pow(HPK.rg,w-1)*Math.pow(12/needOf(w),0.5);
 const dmGain=()=>S.maxWave>=20?Math.floor(1+Math.pow((S.maxWave-20)/4,1.4)):0;
 
@@ -353,6 +365,10 @@ function aimAt(x,y){return Math.atan2(G.p.y-y,G.p.x-x);}
 function updateBoss(e,dt){
  e.a1-=dt;e.a2-=dt;
  if(e.def&&e.def.update)e.def.update(e,dt,A);
+ if(e.parts)for(const p of e.parts){
+  if((p.kind!=='wall'&&p.kind!=='block')||p.hp>0||!(p.down>0))continue;
+  p.down-=dt;if(p.down<=0){p.down=0;if(p.maxHp>0)p.hp=p.maxHp;}
+ }
  // escorts for bosses that don't bring their own
  if(e.def&&e.def.escorts){G.escortT-=dt;if(G.escortT<=0){G.escortT=5;if(G.enemies.length<4)mkEnemy(Math.random()<0.5?'scout':'fighter',{counts:false,rew:0.3});}}
  // captured drones shoot back
@@ -407,6 +423,20 @@ function aimPoint(e){
   if(best)return {x:best.x,y:best.y,part:true};}
  if(e.parts){let best=null,nd=1e9;for(const p of e.parts){if(p.kind!=='eye'||!(p.hp>0))continue;const x=e.x+p.ox,y=e.y+p.oy,d=(x-G.p.x)*(x-G.p.x)+(y-G.p.y)*(y-G.p.y);if(d<nd){nd=d;best={x,y};}}
   if(best)return {x:best.x,y:best.y,part:true};}
+ if(e.boss&&e.parts){
+  const weak=e.parts.find(p=>p.kind==='weak');
+  const covers=(p,x)=>((p.kind==='wall'||p.kind==='block')&&p.hp>0&&Math.abs(x-(e.x+p.ox))<=p.w/2+0.5);
+  if(weak&&e.parts.some(p=>(p.kind==='wall'||p.kind==='block')&&p.maxHp>0)){
+   const span=Math.max(0,weak.w/2-1);let open=null;
+   for(let ox=-span;ox<=span;ox+=2){const x=e.x+weak.ox+ox;if(!e.parts.some(p=>covers(p,x))){open=x;break;}}
+   if(open!=null)return {x:open,y:e.y+weak.oy,part:true};
+   let cover=null;const wx=e.x+weak.ox;
+   for(const p of e.parts){if(!((p.kind==='wall'||p.kind==='block')&&p.hp>0))continue;
+    if(Math.abs(e.x+p.ox-wx)>p.w/2+weak.w/2)continue;
+    if(!cover||p.oy>cover.oy||(p.oy===cover.oy&&p.hp<cover.hp))cover=p;}
+   if(cover)return {x:e.x+cover.ox,y:e.y+cover.oy,part:true};
+  }
+ }
  return {x:e.x,y:e.y,part:false};
 }
 function pickTarget(){
@@ -435,7 +465,7 @@ function targetable(e){return !e.dead&&e.cloak<0.6&&e.y>-2;}
 function rectHit(b,cx,cy,hw,hh){const m=b.r||0,y0=Math.min(b.y,b.py),y1=Math.max(b.y,b.py);return Math.abs(b.x-cx)<=hw+m&&y1>=cy-hh-m&&y0<=cy+hh+m;}
 function findHit(e,b){
  if(e.dead||e.cloak>0.6)return null;
- if(e.parts)for(const p of e.parts){if(p.kind==='wall'&&p.hp<=0)continue;if(p.kind==='limb'){const L=e.limbs&&e.limbs[p.li];if(!L||L.hp<=0)continue;}if(p.kind==='eye'&&!(p.hp>0))continue;if(rectHit(b,e.x+p.ox,e.y+p.oy,p.w/2,p.h/2))return p;}
+ if(e.parts)for(const p of e.parts){if(p.kind==='wall'&&p.hp<=0)continue;if(p.kind==='block'&&p.maxHp>0&&!(p.hp>0))continue;if(p.kind==='limb'){const L=e.limbs&&e.limbs[p.li];if(!L||L.hp<=0)continue;}if(p.kind==='eye'&&!(p.hp>0))continue;if(rectHit(b,e.x+p.ox,e.y+p.oy,p.w/2,p.h/2))return p;}
  if(rectHit(b,e.x,e.y,e.w/2,e.h/2))return 'body';
  return null;
 }
@@ -452,10 +482,13 @@ function applyHit(e,where,dmg,canCrit,hx,hy){
   dmgEnemy(e,dmg*m,crit,m<1?'armor':null);return 'hit';
  }
  let p=where;
- if(p.kind==='block'){sparks(hx,hy,'#b14aed',3);addPart(hx,hy,0,0,0.12,'#ff5ccf',1,3);SFX.tink();return 'block';}
- if(p.kind==='weak'&&p.guard&&wallsAlive(e)){let low=null;for(const q of e.parts)if(q.kind==='wall'&&q.hp>0&&(!low||q.oy<low.oy))low=q;p=low;}
+ if(p.kind==='block'&&!(p.maxHp>0)){sparks(hx,hy,'#b14aed',3);addPart(hx,hy,0,0,0.12,'#ff5ccf',1,3);SFX.tink();return 'block';}
+ if(p.kind==='block'){if(!(p.hp>0))return 'miss';p.hp-=dmg;p.flash=0.08;sparks(hx,hy,'#b14aed',3);addText(fmt(dmg),e.x+p.ox+rnd(-3,3),e.y+p.oy,'#ff5ccf');
+  if(p.hp<=0){p.hp=0;p.down=14;explode(e.x+p.ox,e.y+p.oy,1.1,'#ff5ccf');addText('PLATE CRACKS',e.x+p.ox,e.y+p.oy+6,'#ff5ccf',true);G.shake=Math.max(G.shake,3);SFX.boom();return 'wall';}
+  SFX.tink();return 'block';}
+ if(p.kind==='weak'&&p.guard&&wallsAlive(e)){let low=null;for(const q of e.parts)if(q.kind==='wall'&&q.hp>0&&Math.abs(hx-(e.x+q.ox))<=q.w/2+1&&(!low||q.oy<low.oy))low=q;if(low)p=low;}
  if(p.kind==='wall'){p.hp-=dmg;if(!(p.flash>-0.07))p.flash=0.06;addText(fmt(dmg),e.x+p.ox+rnd(-4,4),e.y+p.oy,'#9aa4c0');
-  if(p.hp<=0){explode(e.x+p.ox,e.y+p.oy,1.5,'#cfd6e6');addText('SHIELD WALL DOWN',e.x,e.y+p.oy+6,'#7fe7ff',true);G.shake=Math.max(G.shake,4);SFX.boom();}else SFX.tink();return 'wall';}
+  if(p.hp<=0){p.hp=0;p.down=11;explode(e.x+p.ox,e.y+p.oy,1.5,'#cfd6e6');addText('SHIELD WALL DOWN',e.x,e.y+p.oy+6,'#7fe7ff',true);G.shake=Math.max(G.shake,4);SFX.boom();}else SFX.tink();return 'wall';}
  dmgEnemy(e,dmg*p.mult,crit,'weak');return 'hit';
 }
 function dmgEnemy(e,dmg,crit,tag){
@@ -665,7 +698,7 @@ function drawBossExtras(e){
  for(const p of e.parts){const px=Math.round(e.x+p.ox),py=Math.round(e.y+p.oy);
   if(p.kind==='wall'&&p.hp>0){const w=p.w,h=p.h;ctx.fillStyle=p.flash>0?'#ffffff':'#3b4252';ctx.fillRect(px-w/2,py-h/2,w,h);ctx.fillStyle=p.flash>0?'#ffffff':'#8a94a6';ctx.fillRect(px-w/2+1,py-h/2,w-2,h-1);
    ctx.fillStyle='#cfd6e6';ctx.fillRect(px-w/2+1,py-h/2,w-2,1);const f=p.hp/p.maxHp;ctx.fillStyle='#7fe7ff';ctx.fillRect(px-w/2+1,py+h/2-1,Math.round((w-2)*f),1);}
-  if(p.kind==='block'){ctx.fillStyle='#5a2a7a';ctx.fillRect(px-3,py-3,6,6);ctx.fillStyle='#b14aed';ctx.fillRect(px-2,py-3,4,5);ctx.fillStyle='#ff5ccf';ctx.fillRect(px-1,py-2,2,1);}
+  if(p.kind==='block'&&(!(p.maxHp>0)||p.hp>0)){const bw=p.w||6,bh=p.h||6;ctx.fillStyle=p.flash>0?'#ffffff':'#5a2a7a';ctx.fillRect(px-bw/2,py-bh/2,bw,bh);ctx.fillStyle=p.flash>0?'#ffffff':'#b14aed';ctx.fillRect(px-bw/2+1,py-bh/2,bw-2,bh-1);ctx.fillStyle='#ff5ccf';ctx.fillRect(px-1,py-bh/2,2,1);}
   if(p.kind==='weak'&&p.eye){const ey=Math.round(e.y+p.eye.oy);ctx.fillStyle=p.eye.c;ctx.globalAlpha=0.5+0.5*pulse;ctx.fillRect(px-2,ey-2,4,4);ctx.fillStyle='#ffffff';ctx.fillRect(px-1,ey-1,2,2);ctx.globalAlpha=1;}
   if(p.core){const open=!wallsAlive(e);const cy=Math.round(e.y);ctx.fillStyle=open?(pulse>0.5?'#ff4d5e':'#ff9f1c'):(pulse>0.5?'#7fe7ff':'#2a6fdb');ctx.fillRect(px-3,cy-3,6,6);ctx.fillStyle='#ffffff';ctx.fillRect(px-1,cy-1,2,2);}
  }
@@ -978,5 +1011,5 @@ function simRun(sec,taps){const dt=1/30;let tapT=0,sampT=0;G.ms=G.ms||{n:0,sum:0
    if(tg){const wk=tg.parts&&tg.parts.find(p=>p.kind==='weak');const b={x:tg.x+(wk?wk.ox:0),y:tg.y+(wk?wk.oy:0),py:tg.y+(wk?wk.oy:0),r:3};const where=findHit(tg,b)||'body';applyHit(tg,where,G.s.click,true,b.x,b.y);G.enemies=G.enemies.filter(e=>!e.dead);}}}
   sampT-=dt;if(sampT<=0){sampT=0.5;const n=G.enemies.filter(e=>e.y>0&&e.y<H&&!e.boss).length;G.ms.n++;G.ms.sum+=n;G.ms.max=Math.max(G.ms.max,n);}}}
 function playerST(taps){const s=G.s;return gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*Math.max(0,s.drones-G.captured)/0.9+taps*s.click*(1+s.crit*2);}
-window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,pickTarget,aimPoint,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,sim:simRun,playerST,eHP:w=>eHP(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
+window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,pickTarget,aimPoint,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,HP_CAP_WAVE,HP_BEND_WAVE,HP_LATE_MULT,DMG_LATE,sim:simRun,playerST,eHP:w=>eHP(w),eDmg:w=>eDmg(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
 })();
