@@ -15,6 +15,6 @@
 - `src/core.js`: the `IV` namespace, number formatting and progression gates (`IV.gateOpen`).
 - `src/content/*.js`: data registries (changelog, sectors, skins, icons, upgrades and Dark Matter, guns, enemies, bosses, features, missions).
 - `src/game.js`: the engine (state and saves, stats, spawning, AI, combat, rendering, store UI). The test handle is `window.__IV`.
-- `tests/`: `run.js` (Playwright suites: smoke, save, migration, gating, balance), `unit.js`, `server.js`, `guardrails.json`, `fixtures/`.
+- `tests/`: `run.js` (Playwright suites: smoke, save, migration, gating, balance, death, mega, mines, aim, latescale), `unit.js`, `server.js`, `guardrails.json`, `fixtures/`.
 - `scripts/`: `validate-docs.js` (docs, changelog, session notes, PR policy) and `expire-sessions.js`.
 - `.github/workflows/`: `ci.yml` (test, then deploy), `automerge.yml`, `expire-sessions.yml`.

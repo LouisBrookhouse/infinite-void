@@ -1,5 +1,5 @@
 /* INFINITE VOID browser test suite (headless Playwright/Chromium).
- * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega,mines,aim] [--verbose]
+ * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega,mines,aim,latescale] [--verbose]
  * Locally you can point at an installed Chrome with CHROME_PATH=/usr/bin/google-chrome.
  * Writes artifacts/ (screenshots, balance report) for CI upload. */
 const {chromium}=require('playwright');
@@ -529,6 +529,195 @@ async aim(){
  assert.ok(clear.t<=270,'idle clear '+clear.t+'s is within 1.5x of the 3 minute fight');
  noErrors(kit.errors,'aim maw');
  await kit.ctx.close();
+},
+async latescale(){
+ const code=fs.readFileSync(path.join(__dirname,'fixtures','louis-iv2.txt'),'utf8').trim();
+ const {ctx,page,errors}=await newPage({seed:1337});
+ page.setDefaultTimeout(120000);
+ await page.evaluate(()=>{__IV.pause(true);__IV.S.muted=true;});
+ await dismissModal(page);
+ const r=await page.evaluate(code=>{
+  const I=__IV;
+  const parsed=I.parseImport(code);
+  if(I.importText(code)!==true)return {err:'import'};
+  I.S.muted=true;I.S.auto=true;I.pause(true);
+  const S0=I.S;
+  const save={
+   v:parsed.v,wave:S0.wave,best:S0.best,warps:S0.warps,dm:S0.dm,dmTotal:S0.dmTotal,
+   credits:S0.credits,finalKills:S0.finalKills,skin:S0.skin,pri:S0.pri,sec:S0.sec,
+   auto:S0.auto,muted:true,seen:S0.seenVersion,deaths:S0.deaths,
+   u:Object.assign({},S0.u),d:Object.assign({},S0.d),wl:Object.assign({},S0.wl)
+  };
+  const H=I.HPK,sector=w=>Math.floor((w-1)/10);
+  const raw=w=>H.base*Math.pow(H.g,w-1)*Math.pow(H.sec,sector(w))*(1+H.p*Math.min(w-1,H.pc));
+  const math={
+   cap:I.HP_CAP_WAVE,bend:I.HP_BEND_WAVE,mult:I.HP_LATE_MULT,late:I.DMG_LATE,ver:I.VERSION,
+   hp45:I.eHP(45),raw45:raw(45),hp100:I.eHP(100),raw100:raw(100),
+   hp101:I.eHP(101),raw101:raw(101),hp125:I.eHP(125),raw125:raw(125),
+   hp126:I.eHP(126),hp140:I.eHP(140),hp200:I.eHP(200),
+   d125:I.eDmg(125),d126:I.eDmg(126),d130:I.eDmg(130),d131:I.eDmg(131),d140:I.eDmg(140),
+   classic125:Math.pow(1.11,124)
+  };
+  const costN=(base,g,L,n)=>base*Math.pow(g,L)*(Math.pow(g,n)-1)/(g-1);
+  function buy(id,room){
+   const u=I.C.upgrades.find(x=>x.id===id);if(!u)return 0;
+   const L=I.S.u[id]|0,cap=Math.min(room,(u.max==null?1e9:u.max)-L);if(cap<=0)return 0;
+   const c0=u.base*Math.pow(u.g,L);if(!(I.S.credits>=c0))return 0;
+   let n=Math.floor(Math.log(I.S.credits*(u.g-1)/c0+1)/Math.log(u.g));
+   n=Math.max(0,Math.min(n,cap,400));
+   while(n>0&&costN(u.base,u.g,L,n)>I.S.credits)n--;if(n<=0)return 0;
+   I.S.credits-=costN(u.base,u.g,L,n);I.S.u[id]+=n;return n;
+  }
+  function buyGun(id,room){
+   const w=I.C.guns.find(g=>g.id===id);if(!w||!(I.S.wl[id]>=1))return;
+   const base=Math.max(100,w.cost),g=1.3,L=I.S.wl[id],c0=base*Math.pow(g,L-1);if(!(I.S.credits>=c0))return;
+   let n=Math.floor(Math.log(I.S.credits*(g-1)/c0+1)/Math.log(g));n=Math.max(0,Math.min(n,room,40));
+   while(n>0&&costN(base,g,L-1,n)>I.S.credits)n--;if(n<=0)return;
+   I.S.credits-=costN(base,g,L-1,n);I.S.wl[id]+=n;
+  }
+  function shop(){
+   const old=I.G.s.maxHull,hit=I.eDmg(I.S.wave)*2.4;let guard=0;
+   while(guard++<6&&I.G.s.maxHull<hit*16){if(!buy('hull',20))break;I.recalc();}
+   if(I.S.u.shield<18)buy('shield',4);
+   if(I.S.u.regen<20)buy('regen',4);
+   if(I.S.u.rate<30)buy('rate',10);
+   if(I.S.u.multi<4)buy('multi',1);
+   if(I.S.u.crit<30)buy('crit',6);
+   buy('dmg',25);
+   if(I.S.u.drone<6)buy('drone',1);
+   if(I.S.u.drone>0&&I.S.u.droneDmg<50)buy('droneDmg',8);
+   buyGun('laser',3);buyGun('ring',2);
+   I.recalc();
+   if(I.G.s.maxHull<hit*12)buy('hull',12);
+   I.recalc();
+   if(!I.G.dead&&!I.G.dying&&I.G.s.maxHull>old)I.G.p.hull=Math.min(I.G.s.maxHull,I.G.p.hull+(I.G.s.maxHull-old));
+  }
+  shop();
+  const dt=1/30;let t=0,acc=0,cur=null,deaths=I.S.deaths,snap=null;
+  const bosses=[];
+  while(t<1500&&I.S.wave<132&&I.S.deaths===deaths){
+   I.update(dt);t+=dt;acc+=dt;
+   const b=I.G.boss;
+   if(b&&b.boss&&!b.dead&&!cur)cur={id:b.bid,wave:I.S.wave,t,ref:b};
+   if(cur&&(cur.ref.hp<=0||cur.ref.dead||I.S.wave!==cur.wave||I.S.deaths>deaths)){
+    bosses.push({id:cur.id,wave:cur.wave,dt:+(t-cur.t).toFixed(2),kill:cur.ref.hp<=0});
+    cur=null;
+   }
+   if(acc>=1){acc=0;shop();
+    if(!I.G.dead&&!I.G.dying)snap={u:Object.assign({},I.S.u),wl:Object.assign({},I.S.wl),pri:I.S.pri,sec:I.S.sec,wave:I.S.wave,dps:Math.round(I.playerST(0)),hull:Math.round(I.G.s.maxHull)};
+   }
+  }
+  const end={t:+t.toFixed(1),wave:I.S.wave,deaths:I.S.deaths};
+  function fight(wave,bid){
+   const S=I.S,G=I.G;
+   Object.assign(S.u,snap.u);Object.assign(S.wl,snap.wl);S.pri=snap.pri;S.sec=snap.sec;
+   S.wave=wave;S.auto=false;S.deaths=0;I.recalc();
+   G.dead=false;G.dying=false;G.megaHold=null;
+   G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.p.x=90;G.p.y=210;
+   G.pb.length=0;G.eb.length=0;G.enemies.length=0;G.caps.length=0;
+   I.startWave();G.toSpawn=0;G.bossT=35;
+   I.spawnBoss(I.BOSSES.find(b=>b.id===bid));
+   const boss=G.boss;boss.y=40;boss.x=90;boss.tx=90;boss.ty=40;
+   const aim=I.aimPoint(boss),weak=boss.parts.find(p=>p.kind==='weak');
+   const covers=boss.parts.filter(p=>(p.kind==='wall'||p.kind==='block')&&p.hp>0&&Math.abs(aim.x-(boss.x+p.ox))<=p.w/2+0.5);
+   let tt=0,minH=G.p.hull;
+   for(let i=0;i<40*30;i++){
+    I.update(dt);tt+=dt;
+    if(G.p.hull<minH)minH=G.p.hull;
+    if(boss.hp<=0)return {wave,bid,kill:true,t:+tt.toFixed(2),deaths:S.deaths,minH:Math.round(minH),aim:+(aim.x-(90+weak.ox)).toFixed(2),covered:covers.length,weakW:weak.w};
+    if(S.deaths>0||G.dying||G.bossT<=0)return {wave,bid,kill:false,death:S.deaths>0||!!G.dying,t:+tt.toFixed(2),hp:+(boss.hp/boss.maxHp).toFixed(3),deaths:S.deaths};
+   }
+   return {wave,bid,kill:false,t:+tt.toFixed(2),hp:+(boss.hp/boss.maxHp).toFixed(3)};
+  }
+  const rows=[];
+  for(const w of [120,125,130])for(const id of ['core','bio'])rows.push(fight(w,id));
+  function mob(wave,type){I.S.wave=wave;const e=I.mkEnemy(type,{x:20,y:20,counts:false});const hp=e.maxHp;e.dead=true;return hp;}
+  function bolt(wave){I.S.wave=wave;I.G.eb.length=0;I.A.bossFire({x:90,y:40,h:20},Math.PI/2,40,'orb',1);return I.G.eb[I.G.eb.length-1].dmg;}
+  function touch(wave){
+   I.S.wave=wave;I.recalc();I.G.dead=false;I.G.dying=false;I.G.p.hull=1e12;I.G.p.shield=0;I.G.s.shieldMax=0;
+   const m=I.mkEnemy('mine',{x:I.G.p.x,y:I.G.p.y,counts:false});m.life=30;m.born=I.G.t-1;
+   const h=I.G.p.hull;I.update(dt);return h-I.G.p.hull;
+  }
+  function back(bid,seg){
+   I.S.wave=125;I.G.enemies.length=0;I.G.pb.length=0;I.G.toSpawn=0;I.G.bossT=30;
+   I.G.wT.pri=10;I.G.wT.sec=10;I.G.s.rate=0;I.G.s.drones=0;I.G.droneT.length=0;
+   I.spawnBoss(I.BOSSES.find(b=>b.id===bid));
+   const boss=I.G.boss;boss.y=-40;
+   const p=boss.parts.find(q=>seg?q.seg===seg:q.kind==='wall'&&q.ox===0);
+   const max=p.maxHp;p.hp=0;p.down=0.05;I.update(0.1);
+   return {hp:p.hp,max,down:p.down};
+  }
+  const mine125=mob(125,'mine'),mine140=mob(140,'mine'),scout125=mob(125,'scout'),scout140=mob(140,'scout');
+  I.S.wave=125;I.spawnBoss(I.BOSSES.find(b=>b.id==='core'));const core125=I.G.boss.maxHp;I.G.boss.dead=true;
+  I.S.wave=140;I.spawnBoss(I.BOSSES.find(b=>b.id==='core'));const core140=I.G.boss.maxHp;
+  return {save,math,end,snap,bosses:bosses.filter(b=>b.wave>=100&&b.id!=='maw'),rows,
+   mine125,mine140,scout125,scout140,core125,core140,bolt125:bolt(125),bolt140:bolt(140),touch125:touch(125),touch140:touch(140),
+   wall:back('core'),plate:back('bio',2)};
+ },code);
+ assert.ok(!r.err,r.err);
+ const s=r.save;
+ assert.strictEqual(s.v,2);
+ assert.strictEqual(s.wave,29);assert.strictEqual(s.best,120);assert.strictEqual(s.warps,42);
+ assert.strictEqual(s.dm,163);assert.strictEqual(s.dmTotal,1465);
+ assert.ok(Math.abs(s.credits-14951656.013)<0.01);
+ assert.strictEqual(s.finalKills,10);assert.strictEqual(s.skin,'eidolon');
+ assert.strictEqual(s.pri,'laser');assert.strictEqual(s.sec,'ring');
+ assert.strictEqual(s.auto,true);assert.strictEqual(s.seen,'1.2.1');assert.strictEqual(s.deaths,62);
+ for(const id of ['dmg','hull','click','rate','credit','crit','regen','multi','drone','droneDmg','shield'])assert.strictEqual(s.u[id],0,id);
+ assert.deepStrictEqual(s.d,{over:12,salv:11,nano:8,quantum:8,warp:5,idle:4});
+ for(const id of ['pulse','twin','spread','homing','laser','ring','wave'])assert.ok(s.wl[id]>=1,id);
+ const m=r.math;
+ assert.strictEqual(m.ver,'1.2.3');
+ assert.strictEqual(m.cap,125);assert.strictEqual(m.bend,100);assert.strictEqual(m.mult,3.5);assert.strictEqual(m.late,1.12);
+ assert.strictEqual(m.hp45,m.raw45);assert.strictEqual(m.hp100,m.raw100);
+ assert.ok(m.hp101>m.hp100&&m.hp101<m.raw101,'wave 101 leaves the classic curve');
+ assert.ok(Math.abs(m.hp125-m.hp100*m.mult)<1,'wave 125 health is 3.5x wave 100');
+ assert.ok(m.hp125<m.raw125/10,'the cap is far below a clamped classic curve');
+ assert.strictEqual(m.hp126,m.hp125);assert.strictEqual(m.hp140,m.hp125);assert.strictEqual(m.hp200,m.hp125);
+ assert.ok(Math.abs(m.d125-m.classic125)<1e-6);assert.ok(Math.abs(m.d126/m.d125-m.late)<1e-9);
+ const sec=Math.floor(130/10)-Math.floor(124/10);
+ assert.ok(Math.abs(m.d131/m.d125-Math.pow(m.late,6)*Math.pow(1.2,sec))<1e-6,'sector step still applies to damage');
+ assert.ok(m.d140>m.d130&&m.d130>m.d125);
+ assert.strictEqual(r.mine125,r.mine140);assert.strictEqual(r.scout125,r.scout140);assert.strictEqual(r.core125,r.core140);
+ assert.ok(Math.abs(r.bolt140/r.bolt125-m.d140/m.d125)<1e-6);
+ assert.ok(Math.abs(r.touch140/r.touch125-m.d140/m.d125)<1e-6);
+ assert.ok(r.touch125>0&&r.bolt125>0);
+ assert.strictEqual(r.end.deaths,62,'the developed run takes no new hull breach');
+ assert.ok(r.end.wave>=130,'run reached wave '+r.end.wave);
+ assert.ok(r.bosses.length>=6,'late bosses fought: '+r.bosses.length);
+ for(const b of r.bosses){assert.strictEqual(b.kill,true,b.id+' w'+b.wave);assert.ok(b.dt<35,b.id+' w'+b.wave+' '+b.dt+'s');}
+ const liveCore=r.bosses.find(b=>b.id==='core'&&b.wave===120);
+ const liveBio=r.bosses.find(b=>b.id==='bio'&&b.wave===125);
+ assert.ok(liveCore&&liveCore.dt<35);assert.ok(liveBio&&liveBio.dt<35);
+ for(const row of r.rows){
+  assert.strictEqual(row.kill,true,row.bid+' w'+row.wave+' hp '+row.hp);
+  assert.ok(row.t<35,row.bid+' w'+row.wave+' '+row.t+'s vs 35s escape');
+  assert.strictEqual(row.deaths,0);
+ }
+ const core125=r.rows.find(x=>x.bid==='core'&&x.wave===125);
+ const bio125=r.rows.find(x=>x.bid==='bio'&&x.wave===125);
+ assert.ok(Math.abs(core125.aim)<=core125.weakW/2,'Big Core aim sits on the weak column');
+ assert.strictEqual(core125.covered,0,'Big Core aim is a gap, not a shield');
+ assert.ok(bio125.covered>=1,'Xeno aim sits on the plate that covers the core');
+ assert.strictEqual(r.wall.hp,r.wall.max);assert.strictEqual(r.wall.down,0);
+ assert.strictEqual(r.plate.hp,r.plate.max);assert.strictEqual(r.plate.down,0);
+ log('  latescale: wave '+r.end.wave+' in '+r.end.t+'s, 0 new deaths | live core120 '+liveCore.dt+'s bio125 '+liveBio.dt+'s | isolated core125 '+core125.t+'s bio125 '+bio125.t+'s (escape 35s) | eHP125 '+Math.round(m.hp125)+' eDmg130/125 '+(m.d130/m.d125).toFixed(3));
+ await page.evaluate(id=>{
+  const I=__IV;I.S.wave=125;I.S.auto=false;I.recalc();
+  I.G.dead=false;I.G.dying=false;I.G.p.hull=I.G.s.maxHull;I.G.p.shield=I.G.s.shieldMax;I.G.p.x=30;I.G.p.y=210;
+  I.startWave();I.G.toSpawn=0;I.spawnBoss(I.BOSSES.find(b=>b.id===id));
+  const b=I.G.boss;b.y=36;b.x=90;b.tx=90;b.ty=36;I.step(0.45);
+ },'core');
+ await page.screenshot({path:path.join(ART,'latescale-core.png')});
+ await page.evaluate(id=>{
+  const I=__IV;I.S.wave=125;I.S.auto=false;I.recalc();
+  I.G.dead=false;I.G.dying=false;I.G.p.hull=I.G.s.maxHull;I.G.p.shield=I.G.s.shieldMax;I.G.p.x=30;I.G.p.y=210;
+  I.startWave();I.G.toSpawn=0;I.spawnBoss(I.BOSSES.find(b=>b.id===id));
+  const b=I.G.boss;b.y=36;b.x=90;b.tx=90;b.ty=36;I.step(0.45);
+ },'bio');
+ await page.screenshot({path:path.join(ART,'latescale-bio.png')});
+ noErrors(errors,'latescale');
+ await ctx.close();
 },
 };
 

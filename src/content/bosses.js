@@ -45,9 +45,10 @@ IV.content.bosses.push(
    if(p2&&e.a2<=0){e.a2=2.4;const a=A.aimAt(e.x,e.y);A.bossFire(e,a,90,'bolt',1,-8);A.bossFire(e,a,90,'bolt',1,8);if(G.marches.length<1)A.spawnInvaderGroup(8,false);}}},
  {id:'core',name:'BIG CORE',tier:'standard',unlock:{wave:20},hp:12,body:0.15,escorts:true,
   half:["............gg","........gggggd","....gggggddddd","..ggddddddgggb","gggddddddgbbbc","gdddddddgbbccw","gggddddddgbbbc","..ggddddddgggb","....gggggddddd","........gggggd","............gg"],
-  setup(e,A){const hh=e.h/2,hp=e.maxHp;e.ty=36;
-   for(const k of [4,10,16])e.parts.push({kind:'wall',ox:0,oy:hh+k,w:14,h:4,hp:hp*0.1,maxHp:hp*0.1,flash:0});
-   e.parts.push({kind:'weak',ox:0,oy:3,w:10,h:hh*2-6,mult:1.5,guard:true,core:true});},
+  setup(e,A){const hh=e.h/2,hp=e.maxHp*0.08;e.ty=36;
+   const cols=[-20,0,20],ys=[hh+6,hh+13,hh+20];
+   for(let i=0;i<3;i++)e.parts.push({kind:'wall',ox:cols[i],oy:ys[i],w:8,h:4,hp,maxHp:hp,flash:0,down:0});
+   e.parts.push({kind:'weak',ox:0,oy:3,w:16,h:hh*2-6,mult:1.5,guard:true,core:true});},
   update(e,dt,A){const G=A.G,p2=e.phase===2;
    e.tx=A.W/2+Math.sin(G.t*0.45)*38;e.ty=36+Math.sin(G.t*0.9)*5;
    const open=!A.wallsAlive(e);if(open&&e.phase===1){e.phase=2;A.banner('CORE EXPOSED','#7fe7ff',1.5);A.SFX.alarm();}
@@ -55,12 +56,15 @@ IV.content.bosses.push(
    if(p2&&e.a2<=0){e.a2=1.4;for(const ox of [-22,22])A.bossFire(e,A.aimAt(e.x+ox,e.y),110,'laser',1,ox,e.h/2);}}},
  {id:'bio',name:'XENO BIOMECH',tier:'standard',unlock:{wave:25},hp:10,body:0.6,escorts:true,
   half:["..p.........",".ppp......vv","pp.pp...vvpp","p...ppvvppee","....pppppeel","...ppeppeell","..ppeepppell","..peep.ppeyy","..pep..ppyoy","...p...pppyy",".......ppppe","........pp.p"],
-  setup(e,A){const hh=e.h/2;e.ty=36;e.tail=[];for(let i=0;i<5;i++){const p={kind:'block',ox:0,oy:0,w:6,h:6,seg:i};e.tail.push(p);e.parts.push(p);}
+  setup(e,A){const hh=e.h/2;e.ty=36;e.tail=[];
+   const plate=A.eHP(A.S.wave)*3.2,side=A.eHP(A.S.wave)*0.9;
+   const rest=[-24,-14,0,14,24],wide=[6,6,14,6,6];
+   for(let i=0;i<5;i++){const hp=i===2?plate:side;const p={kind:'block',ox:rest[i],oy:0,w:wide[i],h:6,seg:i,hp,maxHp:hp,down:0,flash:0};e.tail.push(p);e.parts.push(p);}
    e.parts.push({kind:'weak',ox:0,oy:hh-6,w:10,h:12,mult:2.5,eye:{oy:2,c:'#ffe066'}});},
   update(e,dt,A){const G=A.G,p2=e.phase===2;
    e.tx=A.W/2+Math.sin(G.t*0.5)*28;e.ty=36+Math.sin(G.t*0.8)*4;
-   const spd=p2?2.6:1.6,hh=e.h/2;
-   for(const p of e.tail){const i=p.seg;p.oy=hh+2+i*5;p.ox=Math.sin(G.t*spd+i*0.5)*(3+i*2.6);}
+   const spd=p2?2.2:1.5,hh=e.h/2,rest=[-24,-14,0,14,24];
+   for(const p of e.tail){const i=p.seg;p.oy=hh+2+i*5;p.ox=i===2?0:rest[i]+Math.sin(G.t*spd+i*0.8)*3;}
    if(e.a1<=0){e.a1=p2?1.1:1.5;A.bossFire(e,A.aimAt(e.x,e.y),48,'big',2,0,hh-4);}
    if(p2&&e.a2<=0){e.a2=2.2;const o=Math.random()*A.TAU;for(let i=0;i<12;i++)A.bossFire(e,o+i*A.TAU/12,46,'orb',0.8,0,0);}}}
 );

@@ -3,6 +3,14 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.2.3',date:'2026-11-18',title:'LATE SCALING',
+  added:[
+   'Big Core shields and the Xeno Biomech plates crack when you shoot them, then grow back. The ship lines up with the opening.',
+  ],
+  balance:[
+   'Enemy health climbs slowly from wave 100 and stops after wave 125. Past that, shots and rams hit harder instead.',
+  ],
+  gate:'Health stops climbing after wave 125. Big Core is wave 20. Xeno Biomech is wave 25.'},
  {version:'1.2.2',date:'2026-11-18',title:'BOSS TARGETING',
   added:[
    'The ship lines up under a boss and keeps shooting it, even when smaller enemies are closer.',
