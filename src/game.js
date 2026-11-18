@@ -410,6 +410,10 @@ function aimPoint(e){
  return {x:e.x,y:e.y,part:false};
 }
 function pickTarget(){
+ const boss=G.boss&&G.boss.boss&&targetable(G.boss)&&G.boss.y>0?G.boss:null;
+ if(boss){let hit=null;
+  for(const e of G.enemies){if(!targetable(e)||e.boss||e.y<=0)continue;if(Math.abs(e.x-G.p.x)<10&&Math.abs(e.y-G.p.y)<12&&(!hit||e.y>hit.y))hit=e;}
+  return hit||boss;}
  let close=null;const mines=[];
  for(const e of G.enemies){if(!targetable(e)||e.y<=0)continue;if(e.type==='mine'){mines.push(e);continue;}if(e.y>H-75&&(!close||e.y>close.y))close=e;}
  if(close)return close;
@@ -420,11 +424,7 @@ function pickTarget(){
 }
 function shootGun(id,sec){
  const P=G.p,m=S.u.multi,info=gunInfo(id,S.wl[id]||1,sec),dmg=info.shot,n=info.proj;
- const tgt=pickTarget();
- const aim=tgt?aimPoint(tgt):null;
- const push=b=>{b.py=b.y;b.dmg=dmg;
-  if(aim&&aim.part){const sp=Math.hypot(b.vx,b.vy);if(sp>0){const cur=Math.atan2(b.vy,b.vx),want=Math.atan2(aim.y-b.y,aim.x-b.x),dir=want+(cur+Math.PI/2);b.vx=Math.cos(dir)*sp;b.vy=Math.sin(dir)*sp;}}
-  G.pb.push(b);};
+ const push=b=>{b.py=b.y;b.dmg=dmg;G.pb.push(b);};
  WMAP[id].fire(A,{x:P.x,y:P.y-6,n,m,push,sec:!!sec});
  addPart(P.x,P.y-7,0,0,0.05,'#ffffff',2);SFX.gun(id);
 }
@@ -978,5 +978,5 @@ function simRun(sec,taps){const dt=1/30;let tapT=0,sampT=0;G.ms=G.ms||{n:0,sum:0
    if(tg){const wk=tg.parts&&tg.parts.find(p=>p.kind==='weak');const b={x:tg.x+(wk?wk.ox:0),y:tg.y+(wk?wk.oy:0),py:tg.y+(wk?wk.oy:0),r:3};const where=findHit(tg,b)||'body';applyHit(tg,where,G.s.click,true,b.x,b.y);G.enemies=G.enemies.filter(e=>!e.dead);}}}
   sampT-=dt;if(sampT<=0){sampT=0.5;const n=G.enemies.filter(e=>e.y>0&&e.y<H&&!e.boss).length;G.ms.n++;G.ms.sum+=n;G.ms.max=Math.max(G.ms.max,n);}}}
 function playerST(taps){const s=G.s;return gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*Math.max(0,s.drones-G.captured)/0.9+taps*s.click*(1+s.crit*2);}
-window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,sim:simRun,playerST,eHP:w=>eHP(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
+window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,pickTarget,aimPoint,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,sim:simRun,playerST,eHP:w=>eHP(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
 })();

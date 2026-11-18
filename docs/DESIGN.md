@@ -41,9 +41,18 @@ From the current wave 24, every 3rd wave that is not a boss sets `G.minePass`. T
 
 The layer enters from one side and flies a fixed height, dropping 12 stationary mines on a 14px spacing (centers from x 8 to 162). The sprites overlap into a barrier. From wave 36 the same layer makes a second pass at y 118, the other way. It leaves without a bounty. At most 24 mines are alive. A mine lasts 13.5s, then flashes and despawns with no burst, no reward, and no chain.
 
-Mine HP is 0.16× the wave baseline. A shot or a touch detonates it. `onDeath` fires 4 diagonal pellets (`bossFire` at 32px/s, damage mult 0.1, each pellet 0.14×`eDmg`). A touch also deals `dmg`×`eDmg` (0.45). A detonation fuses any other mine within 16px that is at least 0.25s old, so the line can finish forming and a hit then walks the row. Once 6 or more mines are up, the guns aim at the mine nearest the ship. An enemy below y = H-75 still wins, and fewer than 6 mines leaves the guns on the lowest real enemy.
+Mine HP is 0.16× the wave baseline. A shot or a touch detonates it. `onDeath` fires 4 diagonal pellets (`bossFire` at 32px/s, damage mult 0.1, each pellet 0.14×`eDmg`). A touch also deals `dmg`×`eDmg` (0.45). A detonation fuses any other mine within 16px that is at least 0.25s old, so the line can finish forming and a hit then walks the row. Once 6 or more mines are up, and no boss is on screen, the guns aim at the mine nearest the ship. An enemy below y = H-75 still wins, and fewer than 6 mines leaves the guns on the lowest real enemy. A boss outranks the field. See Targeting.
 
 Sprites use fixed palette letters, not sector X/Y. The layer is a 25×11 barge with an orange rack. A mine is a 15×13 spiked circle with a blinking core and a proximity ring inside 40px.
+
+### Targeting
+One model for every fight. The ship moves horizontally toward the aim x. Primary guns fire their normal patterns from the ship. They are not turned toward a part.
+
+1. An enemy overlapping the hull (within about 10 by 12px) is the target. That is the only time something on top of the ship wins.
+2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth.
+3. With no boss, an enemy below y = H-75 wins, then a mine field of 6 or more (the mine nearest the ship), then the lowest other enemy.
+
+Homing missiles curve toward the nearest target on their own. Drones pick a live enemy and fire toward its aim point. Neither has a boss-only rule or a Maw-only rule.
 
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
@@ -85,7 +94,7 @@ One boss persists across the five waves. The HUD reads `MEGA BOSS - PHASE n/5` w
 
 Each phase has a 90 second clock. A hull breach does not restart the phase. It is an emergency Warp Jump, same as any other wave, with no Maw bounty and no Eidolon. A timeout still restarts **that phase** at full health: the wave number does not drop, and earlier phases stay cleared. Outside a mega boss, a boss that escapes still drops one wave. A hull breach never does.
 
-The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). While that armor is up, the ship's guns, homing missiles and drones aim at a live tentacle (nearest, then lowest health) and do not spend shots on the core. Phase 3 has no tentacles: the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the guns switch to the mouth once the tentacles are gone. Killing that mouth clears the encounter.
+The core is armored while the current phase still has living tentacles (`bodyMult` 0, shots print ARMORED). The ship uses the same targeting as every other fight: it sits under the current part and primary guns fire straight up. That part is a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. Phase 3 has no tentacles, so the two eyes are the targets, and the mouth stays armored until both eyes burst. That calls `nextPhase` and does not end the fight. Phase 5 leaves the mouth at 42% damage taken while any tentacle lives, then at full damage, and the aim point becomes the mouth once the tentacles are gone. Killing that mouth clears the encounter. Homing missiles and drones keep their normal behaviour. Tentacle tips hang inside the lane, so a straight shot from underneath can reach every segment.
 
 | Phase | Wave | What breaks | Pattern |
 |---|---|---|---|
