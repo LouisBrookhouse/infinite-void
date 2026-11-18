@@ -1,5 +1,5 @@
 /* INFINITE VOID browser test suite (headless Playwright/Chromium).
- * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega] [--verbose]
+ * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega,mines] [--verbose]
  * Locally you can point at an installed Chrome with CHROME_PATH=/usr/bin/google-chrome.
  * Writes artifacts/ (screenshots, balance report) for CI upload. */
 const {chromium}=require('playwright');
@@ -384,6 +384,97 @@ async mega(){
  assert.strictEqual(alias.wave,91);assert.strictEqual(alias.mega,true);assert.strictEqual(alias.saved,false);
  const kit=await jump('?mega=1&kit=1');
  assert.strictEqual(kit.wave,91);assert.ok(kit.kit>1,'kit raises debug damage');assert.strictEqual(kit.pri,'laser');
+},
+async mines(){
+ const {ctx,page,errors}=await newPage();
+ await page.evaluate(()=>__IV.pause(true));
+ await dismissModal(page);
+ const r=await page.evaluate(()=>{
+  const I=__IV,S=I.S,G=I.G;
+  S.muted=true;S.auto=true;G.p.hull=1e9;G.s.maxHull=1e9;G.dead=false;G.dying=false;
+  const hold=()=>{G.wT.pri=1e9;G.wT.sec=1e9;G.s.rate=0;G.toSpawn=0;};
+  const step=(n)=>{for(let i=0;i<n;i++){hold();I.update(1/30);}};
+  const live=t=>G.enemies.filter(e=>e.type===t&&!e.dead);
+  const halfHas=(id,ch)=>I.ET[id].sprite.half.join('').includes(ch);
+  const pass={};
+  for(const w of [23,24,25,26,27,28,29,30,31,32,33,35,36,39,40,42,45]){S.wave=w;I.startWave();pass[w]=!!G.minePass;}
+  S.wave=23;I.startWave();
+  const w23={banner:G.banner&&G.banner.txt,miner:live('miner').length};
+  S.wave=30;I.startWave();
+  const w30={banner:G.banner&&G.banner.txt,pass:!!G.minePass};
+  S.wave=24;I.startWave();hold();
+  const miner0=live('miner')[0];
+  const w24={banner:G.banner&&G.banner.txt,w:miner0?miner0.w:0,h:miner0?miner0.h:0};
+  let max=0,span=0,ys=[];
+  for(let i=0;i<150;i++){hold();I.update(1/30);const ms=live('mine');if(ms.length>max){max=ms.length;ys=[...new Set(ms.map(m=>m.y))];span=Math.max(...ms.map(m=>m.x))-Math.min(...ms.map(m=>m.x));}}
+  const line={max,ys,span,mw:live('mine')[0]?live('mine')[0].w:0};
+  S.wave=36;I.startWave();hold();
+  let max2=0,ys2=[];
+  for(let i=0;i<280;i++){hold();I.update(1/30);const ms=live('mine');if(ms.length>=max2){max2=ms.length;ys2=[...new Set(ms.map(m=>+m.y.toFixed(1)))].sort((a,b)=>a-b);}}
+  const two={max2,ys2};
+  G.enemies.length=0;G.eb.length=0;S.waveKills=0;const cred0=S.credits;
+  const xs=[40,54,68,82];
+  const chainM=xs.map(x=>I.mkEnemy('mine',{counts:false,x,y:90}));
+  chainM.forEach(m=>{m.counts=false;m.life=20;m.born=G.t-1;});
+  I.A.kill(chainM[0]);
+  step(20);
+  const chain={dead:chainM.map(m=>!!m.dead),bullets:G.eb.length,wk:S.waveKills};
+  const exp=I.mkEnemy('mine',{counts:false,x:16,y:40});
+  exp.counts=false;exp.life=0.15;const eb=G.eb.length,cr=S.credits,wk=S.waveKills;
+  step(15);
+  const expired={dead:!!exp.dead,bullets:G.eb.length-eb,cred:S.credits-cr,wk:S.waveKills-wk};
+  S.wave=27;I.startWave();hold();
+  for(let i=0;i<150;i++){hold();I.update(1/30);}
+  const before={wave:S.wave,wk:S.waveKills,mines:live('mine').length};
+  const one=live('mine')[0];I.A.kill(one);
+  const afterMine={wave:S.wave,wk:S.waveKills,mines:live('mine').length};
+  G.need=1;G.toSpawn=0;S.waveKills=0;
+  const sc=I.mkEnemy('scout',{counts:true,x:20,y:150});
+  I.A.kill(sc);
+  const cleared={wave:S.wave,minesBefore:before.mines,wkAfterMine:afterMine.wk,waveAfterMine:afterMine.wave};
+  G.p.x=100;G.p.y=210;G.p.hull=800;G.s.maxHull=800;G.dead=false;G.dying=false;
+  const tm=I.mkEnemy('mine',{counts:false,x:100,y:210});
+  tm.counts=false;tm.life=20;tm.born=G.t-1;
+  const h0=G.p.hull;I.update(1/30);
+  const touch={d:h0-G.p.hull,dead:!!tm.dead,warped:S.wave===1&&G.justWarped};
+  G.enemies.length=0;G.p.x=30;G.p.y=210;G.s.rate=0;
+  for(let i=0;i<6;i++){const m=I.mkEnemy('mine',{counts:false,x:24+i*14,y:64});m.counts=false;m.life=30;m.born=G.t-1;}
+  const far=I.mkEnemy('invader',{counts:true,x:160,y:100});
+  step(18);const xField=G.p.x;
+  far.y=200;step(18);const xClose=G.p.x;
+  G.enemies.length=0;G.p.x=20;
+  for(let i=0;i<2;i++){const m=I.mkEnemy('mine',{counts:false,x:20+i*14,y:64});m.counts=false;m.life=30;m.born=G.t-1;}
+  I.mkEnemy('invader',{counts:true,x:160,y:100});
+  step(18);const xFew=G.p.x;
+  let picks=0;
+  for(let i=0;i<400;i++){const t=I.pickType(44);if(t==='miner'||t==='mine')picks++;}
+  for(let i=0;i<80;i++){const t=I.pickType(1);if(t==='miner'||t==='mine')picks++;}
+  return {pass,w23,w30,w24,line,two,chain,expired,before,cleared,touch,aim:{xField,xClose,xFew},picks,xy:{miner:halfHas('miner','X')||halfHas('miner','Y'),mine:halfHas('mine','X')||halfHas('mine','Y')},cred0};
+ });
+ await page.waitForTimeout(500);
+ const toast=await page.evaluate(()=>document.getElementById('toast').textContent);
+ assert.strictEqual(r.pass[23],false);assert.strictEqual(r.pass[24],true);assert.strictEqual(r.pass[25],false);
+ assert.strictEqual(r.pass[27],true);assert.strictEqual(r.pass[30],false);assert.strictEqual(r.pass[33],true);
+ assert.strictEqual(r.pass[35],false);assert.strictEqual(r.pass[36],true);assert.strictEqual(r.pass[40],false);assert.strictEqual(r.pass[45],false);
+ assert.strictEqual(r.w23.banner,'WAVE 23');assert.strictEqual(r.w23.miner,0);
+ assert.ok(r.w30.banner.startsWith('WARNING'));assert.strictEqual(r.w30.pass,false);
+ assert.strictEqual(r.w24.banner,'MINE LAYERS');assert.ok(r.w24.w>=21,'minelayer is a wide hull');assert.ok(r.w24.h>=9);
+ assert.ok(toast.includes('NEW THREAT: MINE LAYERS'),toast);
+ assert.ok(r.line.max>=8&&r.line.max<=12,'a pass lays 8 to 12 mines, got '+r.line.max);
+ assert.strictEqual(r.line.ys.length,1);assert.ok(r.line.span>100);assert.ok(r.line.mw>=13,'mine sprite is readable');
+ assert.ok(r.two.max2>12&&r.two.max2<=24,'second pass stays under the cap, got '+r.two.max2);
+ assert.ok(r.two.ys2.length>=2,'later waves lay a second line');
+ assert.deepStrictEqual(r.chain.dead,[true,true,true,true]);assert.ok(r.chain.bullets>=12);assert.strictEqual(r.chain.wk,0);
+ assert.strictEqual(r.expired.dead,true);assert.strictEqual(r.expired.bullets,0);assert.strictEqual(r.expired.cred,0);assert.strictEqual(r.expired.wk,0);
+ assert.ok(r.before.mines>=8);assert.strictEqual(r.cleared.waveAfterMine,r.before.wave);assert.strictEqual(r.cleared.wkAfterMine,0);
+ assert.strictEqual(r.cleared.wave,r.before.wave+1,'killing the quota still clears while mines are up');
+ assert.ok(r.touch.d>0,'a touch hurts');assert.strictEqual(r.touch.dead,true);
+ assert.ok(r.aim.xField<50,'guns cut the field instead of chasing a far ship');
+ assert.ok(r.aim.xClose>r.aim.xField+12,'a ship on top of you outranks the field');
+ assert.ok(r.aim.xFew>40,'a short row does not hold the guns');
+ assert.strictEqual(r.picks,0);assert.strictEqual(r.xy.miner,false);assert.strictEqual(r.xy.mine,false);
+ noErrors(errors,'mines');
+ await ctx.close();
 },
 };
 

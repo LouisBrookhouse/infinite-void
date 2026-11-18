@@ -371,8 +371,10 @@ function startWave(){
  G.mega=isMegaWave(S.wave);G.isBoss=G.mega||S.wave%5===0;G.boss=null;
  G.need=G.isBoss?1:needOf(S.wave);G.toSpawn=G.need;G.spawnT=G.mega?0.35:1;G.bossT=G.mega?90:35;G.bossAlive=false;G.escortT=4;
  const sec=sectorOf(S.wave);if(sec!==G.sector){G.sector=sec;G.planet=makePlanet(sec);}
+ G.minePass=!G.isBoss&&S.wave>=24&&S.wave%3===0;
  if(G.mega){banner('MEGA BOSS','#ff4d5e',2.2);SFX.alarm();toast(megaPhaseText(S.wave));}
  else if(G.isBoss){banner('WARNING: '+bossFor(S.wave).name,'#ff4d5e',2.2);SFX.alarm();}
+ else if(G.minePass){banner(S.wave===24?'MINE LAYERS':'MINE FIELD','#ff9f1c',1.8);const nt=C.enemies.find(t=>t.threat&&t.unlock.wave===S.wave);if(nt)setTimeout(()=>toast('NEW THREAT: '+nt.threat),400);mkEnemy('miner',{counts:false});}
  else{banner('WAVE '+S.wave,'#7fe7ff',1.3);const nt=C.enemies.find(t=>t.threat&&t.unlock.wave===S.wave);if(nt)setTimeout(()=>toast('NEW THREAT: '+nt.threat),400);}
 }
 function notifyUnlocks(prev){
@@ -407,9 +409,18 @@ function aimPoint(e){
   if(best)return {x:best.x,y:best.y,part:true};}
  return {x:e.x,y:e.y,part:false};
 }
+function pickTarget(){
+ let close=null;const mines=[];
+ for(const e of G.enemies){if(!targetable(e)||e.y<=0)continue;if(e.type==='mine'){mines.push(e);continue;}if(e.y>H-75&&(!close||e.y>close.y))close=e;}
+ if(close)return close;
+ if(mines.length>=6){let best=null,bd=1e9;for(const m of mines){const d=Math.abs(m.x-G.p.x);if(d<bd){bd=d;best=m;}}if(best)return best;}
+ let real=null;for(const e of G.enemies)if(targetable(e)&&e.type!=='mine'&&e.y>-2&&(!real||e.y>real.y))real=e;
+ if(real)return real;
+ let best=null,bd=1e9;for(const m of mines){const d=Math.abs(m.x-G.p.x);if(d<bd){bd=d;best=m;}}return best;
+}
 function shootGun(id,sec){
  const P=G.p,m=S.u.multi,info=gunInfo(id,S.wl[id]||1,sec),dmg=info.shot,n=info.proj;
- let tgt=null;for(const e of G.enemies)if(targetable(e)&&e.y>0&&(!tgt||e.y>tgt.y))tgt=e;
+ const tgt=pickTarget();
  const aim=tgt?aimPoint(tgt):null;
  const push=b=>{b.py=b.y;b.dmg=dmg;
   if(aim&&aim.part){const sp=Math.hypot(b.vx,b.vy);if(sp>0){const cur=Math.atan2(b.vy,b.vx),want=Math.atan2(aim.y-b.y,aim.x-b.x),dir=want+(cur+Math.PI/2);b.vx=Math.cos(dir)*sp;b.vy=Math.sin(dir)*sp;}}
@@ -583,7 +594,7 @@ function update(dt){
  if(P.hull<s.maxHull)P.hull=Math.min(s.maxHull,P.hull+s.regen*dt);
  if(P.shieldDelay>0)P.shieldDelay-=dt;else if(P.shield<s.shieldMax)P.shield=Math.min(s.shieldMax,P.shield+s.shieldMax*0.25*dt);
  P.flash-=dt;
- let tgt=null;for(const e of G.enemies)if(targetable(e)&&(!tgt||e.y>tgt.y))tgt=e;
+ const tgt=pickTarget();
  const tp=tgt?aimPoint(tgt):null;
  const tx=tp?(tp.part?tp.x:tp.x+Math.sin(G.t*1.7)*6):W/2+Math.sin(G.t*0.8)*30;
  P.x=clamp(P.x+clamp(tx-P.x,-45*dt,45*dt),8,W-8);P.y=H-30+Math.sin(G.t*2)*1.5;
@@ -636,12 +647,13 @@ function update(dt){
 function pcircle(cx,cy,r,c){ctx.fillStyle=c;const n=Math.max(8,Math.floor(r*6));for(let i=0;i<n;i++){const a=i/n*TAU;ctx.fillRect(Math.round(cx+Math.cos(a)*r),Math.round(cy+Math.sin(a)*r),1,1);}}
 function bar(x,y,w,h,p,c,bg){ctx.fillStyle='#000';ctx.fillRect(x-1,y-1,w+2,h+2);ctx.fillStyle=bg||'#1b2b5a';ctx.fillRect(x,y,w,h);ctx.fillStyle=c;ctx.fillRect(x,y,Math.round(w*clamp(p,0,1)),h);}
 function drawEnemy(e){
- const bob=e.boss||e.ai==='march'||e.ai==='rock'?0:Math.round(Math.sin(G.t*3+e.phase));
+ const bob=e.boss||e.ai==='march'||e.ai==='rock'||e.noBob?0:Math.round(Math.sin(G.t*3+e.phase));
  let img=e.flash>0?e.spr.f:e.spr.c;if(e.spr2&&e.frame%2&&e.flash<=0)img=e.spr2.c;
  if(e.cloak>0){ctx.globalAlpha=e.cloak>0.95?0.1+0.08*Math.sin(G.t*20):1-e.cloak*0.9;}
  const x=Math.round(e.x-e.w/2),y=Math.round(e.y-e.h/2)+bob;
  if(e.ai==='kami'&&e.state==='lock'&&(G.t*16|0)%2)img=e.spr.f;
  ctx.drawImage(img,x,y,e.w,e.h);
+ if(e.T.draw)e.T.draw(e,A,ctx);
  if(e.ai==='dive'&&e.state==='dive'){ctx.fillStyle='#ffe066';ctx.fillRect(Math.round(e.x),y-2,1,2);}
  ctx.globalAlpha=1;
  if(e.sh>0)pcircle(e.x,e.y+bob,Math.max(e.w,e.h)/2+2,(G.t*8|0)%2?'#7fe7ff':'#2a6fdb');
