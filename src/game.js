@@ -360,6 +360,7 @@ function updateBoss(e,dt){
 }
 /* ---------- content API: the object passed as `A` to content hooks (guns, bosses, custom enemies) ---------- */
 const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossFire,mkEnemy,spawnInvaderGroup,damagePlayer,addText,addPart,banner,sparks,explode,SFX,wallsAlive,nextPhase,
+ kill(e){if(e&&!e.dead)killEnemy(e);},
  tone:(...a)=>{if(AC)tone(...a);},noise:(...a)=>{if(AC)noise(...a);}};
 
 
@@ -458,7 +459,9 @@ function dmgEnemy(e,dmg,crit,tag){
  if(e.boss&&!(e.def&&e.def.phaseLock)&&e.phase===1&&e.hp<e.maxHp*0.5){e.phase=2;banner(e.name+' ENRAGED','#ff4d5e',1.6);G.flash=0.3;SFX.alarm();}
 }
 function killEnemy(e){
- e.dead=true;const s=G.s;if(G.mk&&!e.boss&&e.counts)G.mk.push(G.t-e.born);
+ if(!e||e.dead)return;
+ e.dead=true;if(e.T.onDeath)e.T.onDeath(e,A);
+ const s=G.s;if(G.mk&&!e.boss&&e.counts)G.mk.push(G.t-e.born);
  let rew=eRew(S.wave)*e.T.rew*s.credMult*e.rew;if(!e.counts)rew*=0.3;
  if(e.ai==='rock'&&e.size<3)rew=eRew(S.wave)*0.25*s.credMult;
  addCredits(rew);addText('+'+fmt(rew),e.x,e.y,'#ffe066',true);

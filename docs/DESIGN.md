@@ -29,12 +29,15 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | wave 2-10 | Rapid Cycler (2), Dual Fighter and Fighters (3), Divers (4), Targeting AI (4), Nano Repair and Invader grid and first boss Dreadnought (5), Spread Gun and Spread Array (6), Kamikazes (7), Escort Drones (8), Homing Missiles and Cruisers (9), Deflector and Boss Galaga (10) |
 | sector 2 (wave 11-20) | Nebula Drift. Secondary gun slot and Shielded Guards (12), Laser (13), Rocks (14), Mothership (15), Snipers (16), Ring Laser (17), Big Core (20) |
 | wave 20 | **Warp Jump** available (run-based: clear wave 20 this run) |
-| sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Xeno Biomech (25), Solar Forge (31), The Deep (41) |
+| sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
 | sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
 | future | Missions, more skins (R13), sector modifiers, meta threats (wave 100 and deeper), and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
 
 Guideline: new **combat content** goes where the current content runs out (waves 25-60, sectors 3-6). New **meta systems** gate on `warps` so the first run stays simple. A capstone the owner asks for can sit past the stall (THE MAW at sector 10). It still needs a gate a fresh save cannot open.
+
+### Mine Layer
+`miner` unlocks at the current wave 24. It drifts along the top and drops `mine`. `mine` has weight 0, so the spawner never picks it, and `counts: false`, so a mine kill does not clear the wave. At most 3 mines are alive. A mine falls at up to its `spd`, flashes inside 28px, and `onDeath` fires 8 bullets (`bossFire` at 44px/s, damage mult 0.2, each pellet 0.28×`eDmg`). A touch also deals `dmg`×`eDmg` (0.55) and detonates. A mine that leaves the bottom does not burst. Idle guns prefer the lowest target, so they shoot mines before the layer. Mine HP is 0.26× the wave baseline.
 
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
@@ -45,12 +48,12 @@ Each file in `src/content/` documents its fields in a header comment. Summary:
 - **icons.js**: `id -> [rows]`. `ship` and `drone` are special icons.
 - **upgrades.js**: credit upgrades `{id, name, desc, icon, base, g, max?, req?, unlock, show(stats, level)}`, with effects in `calcStats()`. Dark Matter `{id, icon, name, desc, base, g, max?, unlock, show(level)}`.
 - **guns.js**: `{id, name, desc, icon, R, rm, cost, unlock, proj(m), fire(A,g), sfx(A), draw?, charge?, sfxGap?}`. The engine derives per-shot damage from `R/rm/proj`, so total DPS is comparable across guns.
-- **enemies.js**: `{id, name, threat?, unlock, weight, late?, squad?, big?, hp, rew, dmg, spd, fire, shots, ai, shield?, sprite, init?, update?}`. Built-in `ai`: roam, dive, march, kami, rock, sniper, cloak. Use `custom` plus `update(e,dt,A)` for new behaviours.
+- **enemies.js**: `{id, name, threat?, unlock, weight, late?, squad?, big?, hp, rew, dmg, spd, fire, shots, ai, shield?, sprite, init?, update?, onDeath?}`. Built-in `ai`: roam, dive, march, kami, rock, sniper, cloak. Use `custom` plus `update(e,dt,A)` for new behaviours. `onDeath(e,A)` runs once from `killEnemy`. Weight `0` is never picked by the spawner.
 - **bosses.js**: `{id, name, tier, unlock (wave multiple of 5), hp, body, escorts, palette?, half, setup(e,A), update(e,dt,A), draw?(e,A,ctx), phaseLock?, fromWave?, phases?}`. `tier` is `standard`, `elite`, `mega`, or `meta` (the list stays open). A missing tier counts as `standard`. The every-5 rotation cycles through **standard** bosses whose gate is open at the current wave, in list order. Elite, mega, and meta bosses are not in that rotation. **Append new standard bosses at the end** so existing waves keep their bosses. Parts may be `{kind:'limb'}` or `{kind:'core'}` as well as weak, wall and block. `phaseLock` skips the automatic 50% enrage. A mega boss sets `fromWave` and `phases` for the waves it occupies. A `meta` boss is a meta threat: see "Meta threats". The registry has no `meta` entry yet.
 - **features.js**: mechanic flags `{id, name, desc, unlock, announce?}`, checked in the engine with `feat(id)`.
 - **missions.js**: reserved, and the contract gets fixed by the roadmap item that implements it.
 
-The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase`. `nextPhase(e)` advances a mega boss one wave and rebuilds it. Extend the API rather than reaching into engine internals.
+The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase, kill`. `nextPhase(e)` advances a mega boss one wave and rebuilds it. `kill(e)` runs `killEnemy` once. Extend the API rather than reaching into engine internals.
 
 **Save compatibility:** the key is `voidbreaker_save_v1` (legacy name, never change it). New persistent state goes in `fresh()` with a default, and `migrate()` copies known fields and fills the rest. New upgrade, gun and Dark Matter ids get level 0 automatically. `S.skin`, `S.skins` and `S.finalKills` are persistent. `S.finalKills` is the lifetime count of mega-boss clears. The key name stays so old saves load. `S.megaPaid` is 1 after this run has taken a mega-boss bounty. Warp Jump, including a hull breach, clears `megaPaid` and does not clear `finalKills` or owned skins. Reset All does, because it loads `fresh()`.
 
