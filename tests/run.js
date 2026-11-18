@@ -1,5 +1,5 @@
 /* INFINITE VOID browser test suite (headless Playwright/Chromium).
- * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega,mines] [--verbose]
+ * node tests/run.js [--only smoke,save,migration,gating,balance,death,mega,mines,aim] [--verbose]
  * Locally you can point at an installed Chrome with CHROME_PATH=/usr/bin/google-chrome.
  * Writes artifacts/ (screenshots, balance report) for CI upload. */
 const {chromium}=require('playwright');
@@ -475,6 +475,60 @@ async mines(){
  assert.strictEqual(r.picks,0);assert.strictEqual(r.xy.miner,false);assert.strictEqual(r.xy.mine,false);
  noErrors(errors,'mines');
  await ctx.close();
+},
+async aim(){
+ const {ctx,page,errors}=await newPage({seed:1337});
+ await page.evaluate(()=>__IV.pause(true));
+ await dismissModal(page);
+ const r=await page.evaluate(()=>{
+  const I=__IV,S=I.S,G=I.G;
+  S.muted=true;S.auto=true;G.p.hull=1e9;G.s.maxHull=1e9;G.dead=false;G.dying=false;
+  S.wave=15;I.startWave();G.toSpawn=0;
+  I.spawnBoss(I.bossFor(15));
+  const boss=G.boss;boss.x=140;boss.y=50;
+  G.p.x=20;G.p.y=210;
+  I.mkEnemy('invader',{counts:false,x:20,y:180});
+  for(let i=0;i<8;i++){const m=I.mkEnemy('mine',{counts:false,x:12+i*20,y:64});m.life=30;m.counts=false;}
+  const picked=I.pickTarget();
+  const x0=G.p.x;
+  for(let i=0;i<30;i++){G.wT.pri=1e9;G.wT.sec=1e9;G.s.rate=0;I.update(1/30);}
+  const moved=G.p.x;
+  const on=I.mkEnemy('fighter',{counts:false,x:G.p.x,y:G.p.y});
+  const threat=I.pickTarget();
+  on.dead=true;
+  S.wave=91;S.pri='pulse';S.sec='homing';S.wl.pulse=1;S.wl.homing=1;S.u.multi=0;I.recalc();
+  I.startWave();G.p.hull=1e9;G.dead=false;G.dying=false;
+  for(let i=0;i<90;i++)I.update(1/30);
+  const maw=G.boss,part=I.aimPoint(maw);
+  const shipX=part.x>90?30:150;G.p.x=shipX;G.pb.length=0;G.wT.pri=0;G.wT.sec=0;G.s.rate=20;
+  I.update(1/30);
+  const shots=G.pb.map(b=>({k:b.k,x:+b.x.toFixed(1),vx:+b.vx.toFixed(2),vy:+b.vy.toFixed(2),homing:b.homing|0}));
+  return {boss:!!(picked&&picked.boss),bid:boss.bid,x0,moved:+moved.toFixed(1),threat:threat&&threat.type,partX:+part.x.toFixed(1),part:part.part,shipX,shots,limbs:maw.limbs.filter(L=>L.hp>0).length};
+ });
+ assert.strictEqual(r.boss,true,'a boss outranks a closer minion and a mine field');
+ assert.ok(r.moved>r.x0+12,'the ship slides toward the boss');
+ assert.strictEqual(r.threat,'fighter','only an enemy on the hull pulls aim off the boss');
+ assert.strictEqual(r.part,true);assert.ok(r.limbs>=4);
+ assert.ok(Math.abs(r.partX-r.shipX)>40,'the tentacle is not already under the ship');
+ const pulse=r.shots.filter(b=>b.k==='pulse');
+ const missiles=r.shots.filter(b=>b.k==='missile');
+ assert.ok(pulse.length>=1,'primary gun fired');
+ for(const b of pulse){assert.strictEqual(b.vx,0,'primary shots fly straight up');assert.ok(b.vy<0);assert.strictEqual(b.homing,0);assert.ok(Math.abs(b.x-r.shipX)<8,'the bolt leaves the ship, not the tentacle');}
+ assert.ok(missiles.length>=1&&missiles.every(b=>b.homing===1),'homing missiles stay homing');
+ noErrors(errors,'aim');
+ await ctx.close();
+ const kit=await newPage({seed:1337,query:'?mega=1&kit=1&mute=1'});
+ const clear=await kit.page.evaluate(()=>{
+  const I=__IV,rows=[];
+  let t=0;
+  for(let i=0;i<30;i++){I.sim(10,0);t+=10;rows.push({t,wave:I.S.wave,form:I.G.boss&&I.G.boss.form,deaths:I.S.deaths,kills:I.S.finalKills|0});
+   if((I.S.finalKills|0)>0||I.S.wave>=96||I.S.deaths>0)break;}
+  return {t,wave:I.S.wave,deaths:I.S.deaths,kills:I.S.finalKills|0,rows};
+ });
+ assert.strictEqual(clear.deaths,0);assert.ok(clear.kills>=1,'idle kit clears the Maw');assert.ok(clear.wave>=96);
+ assert.ok(clear.t<=270,'idle clear '+clear.t+'s is within 1.5x of the 3 minute fight');
+ noErrors(kit.errors,'aim maw');
+ await kit.ctx.close();
 },
 };
 
