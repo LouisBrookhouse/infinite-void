@@ -3,6 +3,15 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.2.0',date:'2026-11-18',title:'MINE LAYER',
+  added:[
+   'Mine Layers drift across the top from wave 24 and drop slow proximity mines.',
+   'Shoot a mine, or let one touch you, and it bursts into eight shots.',
+  ],
+  balance:[
+   'Mines are fragile, so clearing a drop does not stall the wave. The burst is the part that hurts.',
+  ],
+  gate:'Wave 24. Only Mine Layers drop mines.'},
  {version:'1.1.4',date:'2026-11-17',title:'MEGA BOSS',
   added:[
    'THE MAW is a mega boss. After phase 5 the run continues into the next wave.',
