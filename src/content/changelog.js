@@ -3,6 +3,18 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.2.1',date:'2026-11-18',title:'MINE LAYER REWORK',
+  added:[
+   'Mine Layers sweep the lane and lay a line of mines. Shoot one and the neighbours chain-detonate.',
+   'Mines sit still, blink, and fade after a short while so a field does not last the whole wave.',
+  ],
+  balance:[
+   'A mine field shows up every few waves from wave 24. Mines break easily, and the guns cut a gap through the line.',
+  ],
+  fixed:[
+   'Mine Layers were easy to miss, and the mines looked like small shots.',
+  ],
+  gate:'Wave 24. A mine field every 3 waves after that. Boss waves skip it.'},
  {version:'1.2.0',date:'2026-11-18',title:'MINE LAYER',
   added:[
    'Mine Layers drift across the top from wave 24 and drop slow proximity mines.',
