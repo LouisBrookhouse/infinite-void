@@ -17,4 +17,5 @@ Object.assign(IV.content.icons,{
  laser:["..cw","..cw","..cw","..cw","..cw","..cw","..cw","..cw"],
  ring:["..mm",".m..","m..p","m.pw","m..p",".m..","..mm","...."],
  wave:["..cc",".cww","cwww","cwwy","cwww",".cww","..cc","...."],
+ pods:["..c","cwc",".c.","...","..c","cwc",".c.","..."],
 });
