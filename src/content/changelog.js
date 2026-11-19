@@ -3,6 +3,14 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.3.0',date:'2026-11-19',title:'OPTION PODS',
+  added:[
+   'Option Pods: two orbs trail the ship and copy your primary shots at 40% damage.',
+  ],
+  balance:[
+   'They cost ¢1,500 and show up at wave 26. A 30 minute run still stalls at wave 44, and a warp still pays +13 Dark Matter.',
+  ],
+  gate:'Wave 26, in the ship tab. A fresh save does not have them.'},
  {version:'1.2.3',date:'2026-11-18',title:'LATE SCALING',
   added:[
    'Big Core shields and the Xeno Biomech plates crack when you shoot them, then grow back. The ship lines up with the opening.',

@@ -15,7 +15,8 @@ IV.content.upgrades.push(
  {id:'multi',icon:'multi',name:'SPREAD ARRAY',desc:'+1 projectile & +50% gun damage',base:300,g:9,max:4,unlock:{wave:6},show:(s,L)=>'+'+L+' proj'},
  {id:'drone',icon:'drone',name:'ESCORT DRONES',desc:'Drones that auto-attack',base:500,g:5,max:6,unlock:{wave:8},show:s=>s.drones+' drone'+(s.drones===1?'':'s')},
  {id:'droneDmg',icon:'droneDmg',name:'DRONE AI CORE',desc:'Drone damage (+25%/lv)',base:800,g:1.2,unlock:{wave:8},req:'drone',show:s=>fmt(s.droneDmg)},
- {id:'shield',icon:'shield',name:'DEFLECTOR',desc:'Recharging energy shield',base:400,g:1.3,unlock:{wave:10},show:s=>fmt(s.shieldMax)}
+ {id:'shield',icon:'shield',name:'DEFLECTOR',desc:'Recharging energy shield',base:400,g:1.3,unlock:{wave:10},show:s=>fmt(s.shieldMax)},
+ {id:'pods',icon:'pods',name:'OPTION PODS',desc:'2 trailing orbs copy the primary at 40% damage',base:1500,g:1.8,max:1,unlock:{wave:26},show:(s,L)=>L?'2 ORBS':'NONE'}
 );
 /* Dark Matter upgrades. Contract: {id, icon, name, desc, base, g, max?, unlock, show(level)}. Costs are whole DM per level. */
 IV.content.darkMatter.push(

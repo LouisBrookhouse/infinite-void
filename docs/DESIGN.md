@@ -29,7 +29,7 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | wave 2-10 | Rapid Cycler (2), Dual Fighter and Fighters (3), Divers (4), Targeting AI (4), Nano Repair and Invader grid and first boss Dreadnought (5), Spread Gun and Spread Array (6), Kamikazes (7), Escort Drones (8), Homing Missiles and Cruisers (9), Deflector and Boss Galaga (10) |
 | sector 2 (wave 11-20) | Nebula Drift. Secondary gun slot and Shielded Guards (12), Laser (13), Rocks (14), Mothership (15), Snipers (16), Ring Laser (17), Big Core (20) |
 | wave 20 | **Warp Jump** available (run-based: clear wave 20 this run) |
-| sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Solar Forge (31), The Deep (41) |
+| sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Option Pods (26), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
 | sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
 | future | Missions, more skins (R13), sector modifiers, meta threats (wave 100 and deeper), and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
@@ -53,6 +53,9 @@ One model for every fight. The ship moves horizontally toward the aim x. Primary
 3. With no boss, an enemy below y = H-75 wins, then a mine field of 6 or more (the mine nearest the ship), then the lowest other enemy.
 
 Homing missiles curve toward the nearest target on their own. Drones pick a live enemy and fire toward its aim point. Neither has a boss-only rule or a Maw-only rule.
+
+### Option Pods
+Ship upgrade `pods` (max 1, ¢1,500, best wave 26). Two orbs trail the ship. `shootGun` copies each primary shot from both orbs at 40% damage and the same velocity. The copies are not aimed at a part and do not gain homing. A homing primary still copies homing, because that is the shot. Secondary guns are not copied. The level resets on Warp Jump with the other ship upgrades. The gate stays open once best wave is 26. A fresh save is level 0, so the orbs are absent.
 
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:

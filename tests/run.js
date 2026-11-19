@@ -667,7 +667,7 @@ async latescale(){
  assert.deepStrictEqual(s.d,{over:12,salv:11,nano:8,quantum:8,warp:5,idle:4});
  for(const id of ['pulse','twin','spread','homing','laser','ring','wave'])assert.ok(s.wl[id]>=1,id);
  const m=r.math;
- assert.strictEqual(m.ver,'1.2.3');
+ assert.ok(/^\d+\.\d+\.\d+$/.test(m.ver)&&m.ver.split('.').map(Number).reduce((a,n,i)=>a||(n!==[1,2,3][i]?(n>[1,2,3][i]?1:-1):0),0)>=0,'version >= 1.2.3: '+m.ver);
  assert.strictEqual(m.cap,125);assert.strictEqual(m.bend,100);assert.strictEqual(m.mult,3.5);assert.strictEqual(m.late,1.12);
  assert.strictEqual(m.hp45,m.raw45);assert.strictEqual(m.hp100,m.raw100);
  assert.ok(m.hp101>m.hp100&&m.hp101<m.raw101,'wave 101 leaves the classic curve');

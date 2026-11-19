@@ -167,6 +167,7 @@ function calcStats(){
 function statsWith(id,L){const t=S.u[id];S.u[id]=L;const s=calcStats();S.u[id]=t;return s;}
 function gunInfo(id,L,sec){const w=WMAP[id],s=G.s,m=S.u.multi;const proj=wProj(id,m);return {shot:s.dmg*wMult(L)*w.R*(1+0.5*m)/(w.rm*proj)*(sec?0.6:1),proj,rate:s.rate*w.rm*(sec?0.5:1)};}
 function gunDps(id,L,sec){const g=gunInfo(id,L,sec);return g.shot*g.proj*g.rate;}
+function podDps(){return (S.u.pods|0)>=1?gunDps(S.pri,S.wl[S.pri]||1,false)*0.8:0;}
 const sectorOf=w=>Math.floor((w-1)/10);
 const needOf=w=>Math.min(12+Math.floor(w*0.9),150);
 const maxAliveOf=w=>Math.min(5+Math.floor(w*0.7),110);
@@ -190,7 +191,7 @@ const dmGain=()=>S.maxWave>=20?Math.floor(1+Math.pow((S.maxWave-20)/4,1.4)):0;
 /* ---------- runtime ---------- */
 const G={s:null,enemies:[],pb:[],eb:[],parts:[],texts:[],stars:[],caps:[],banner:null,shake:0,flash:0,warpFx:0,
  p:{x:W/2,y:H-30,hull:20,shield:0,shieldDelay:0,flash:0},wT:{pri:0,sec:0},dead:false,respawnT:0,need:8,toSpawn:0,spawnT:0,isBoss:false,bossAlive:false,boss:null,bossT:35,escortT:3,
- droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,hiddenAt:0,debugMul:1,mega:false,megaHold:null};
+ droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,hiddenAt:0,debugMul:1,mega:false,megaHold:null,podHist:[]};
 for(let i=0;i<70;i++){const l=i%3;G.stars.push({x:Math.random()*W,y:Math.random()*H,l,v:[5,13,30][l],c:['#2a3a7a','#7383bb','#ffffff'][l]});}
 function recalc(){G.s=calcStats();}
 
@@ -452,11 +453,49 @@ function pickTarget(){
  if(real)return real;
  let best=null,bd=1e9;for(const m of mines){const d=Math.abs(m.x-G.p.x);if(d<bd){bd=d;best=m;}}return best;
 }
+function podOn(){return (S.u.pods|0)>=1;}
+function notePods(){
+ if(!podOn()||G.dead){G.podHist.length=0;return;}
+ const h=G.podHist,P=G.p,last=h[h.length-1];
+ if(!last||G.t-last.t>=0.016)h.push({x:P.x,y:P.y,t:G.t});
+ const cut=G.t-0.55;
+ while(h.length>2&&h[0].t<cut)h.shift();
+}
+function podSpot(i){
+ const P=G.p,h=G.podHist,side=i?-1:1;
+ let x=P.x,y=P.y;
+ if(h.length>=2){
+  const want=G.t-0.16*(i+1);
+  let k=h.length-1;
+  while(k>0&&h[k-1].t>want)k--;
+  const a=h[Math.max(0,k-1)],b=h[k],u=b.t<=a.t?1:clamp((want-a.t)/(b.t-a.t),0,1);
+  x=a.x+(b.x-a.x)*u;y=a.y+(b.y-a.y)*u;
+ }
+ return {x:clamp(x+side*7,8,W-8),y:clamp(y+3,12,H-22)};
+}
+function cloneShot(b,x,y,dmg){
+ const c={};
+ for(const k in b){
+  if(k==='hits')c.hits=new Set();
+  else if(k==='tg')continue;
+  else c[k]=b[k];
+ }
+ c.x=x;c.y=y;c.py=y;c.dmg=dmg;
+ return c;
+}
 function shootGun(id,sec){
  const P=G.p,m=S.u.multi,info=gunInfo(id,S.wl[id]||1,sec),dmg=info.shot,n=info.proj;
- const push=b=>{b.py=b.y;b.dmg=dmg;G.pb.push(b);};
- WMAP[id].fire(A,{x:P.x,y:P.y-6,n,m,push,sec:!!sec});
- addPart(P.x,P.y-7,0,0,0.05,'#ffffff',2);SFX.gun(id);
+ const srcX=P.x,srcY=P.y-6,pods=!sec&&podOn();
+ const push=b=>{
+  b.py=b.y;b.dmg=dmg;G.pb.push(b);
+  if(!pods)return;
+  const dx=b.x-srcX,dy=b.y-srcY;
+  for(let i=0;i<2;i++){const s=podSpot(i);G.pb.push(cloneShot(b,s.x+dx,s.y+dy,dmg*0.4));}
+ };
+ WMAP[id].fire(A,{x:srcX,y:srcY,n,m,push,sec:!!sec});
+ addPart(P.x,P.y-7,0,0,0.05,'#ffffff',2);
+ if(pods)for(let i=0;i<2;i++){const s=podSpot(i);addPart(s.x,s.y,0,0,0.04,'#7fe7ff',1);}
+ SFX.gun(id);
 }
 function gunInterval(id,sec){return 1/(G.s.rate*WMAP[id].rm*(G.overT>0?2:1)*(sec?0.5:1));}
 function targetable(e){return !e.dead&&e.cloak<0.6&&e.y>-2;}
@@ -631,6 +670,7 @@ function update(dt){
  const tp=tgt?aimPoint(tgt):null;
  const tx=tp?(tp.part?tp.x:tp.x+Math.sin(G.t*1.7)*6):W/2+Math.sin(G.t*0.8)*30;
  P.x=clamp(P.x+clamp(tx-P.x,-45*dt,45*dt),8,W-8);P.y=H-30+Math.sin(G.t*2)*1.5;
+ notePods();
  const hasT=G.enemies.some(e=>targetable(e)&&e.y>0);
  for(const slot of ['pri','sec']){const id=S[slot];if(!id||!(S.wl[id]>=1))continue;const iv=gunInterval(id,slot==='sec');
   G.wT[slot]-=dt;if(G.wT[slot]<=0){if(hasT){G.wT[slot]=Math.max(0,G.wT[slot]+iv);shootGun(id,slot==='sec');if(WMAP[id].charge&&iv>0.35)SFX.charge(iv);}else G.wT[slot]=0;}}
@@ -749,6 +789,9 @@ function render(){
   const px=Math.round(P.x-sprP.w/2),py=Math.round(P.y-sprP.h/2);
   const fh=2+((G.t*30|0)%3)+(G.overT>0?2:0);ctx.fillStyle=G.overT>0?'#ff5ccf':'#ff9f1c';ctx.fillRect(px+4,py+12,3,fh);ctx.fillStyle='#ffe066';ctx.fillRect(px+5,py+12,1,fh+1);
   ctx.fillStyle='#ff4d5e';ctx.fillRect(px+1,py+11,1,1+(fh>3?1:0));ctx.fillRect(px+9,py+11,1,1+(fh>3?1:0));
+  if(podOn())for(let i=0;i<2;i++){const s=podSpot(i),x=Math.round(s.x),y=Math.round(s.y);
+   ctx.fillStyle='#1b2b5a';ctx.fillRect(x-1,y-2,3,5);ctx.fillRect(x-2,y-1,5,3);
+   ctx.fillStyle='#7fe7ff';ctx.fillRect(x-1,y-1,3,3);ctx.fillStyle='#ffffff';ctx.fillRect(x,y,1,1);}
   ctx.drawImage(P.flash>0?sprP.f:sprP.c,px,py);
   if(WMAP[S.pri].charge){const iv=gunInterval(S.pri,false),k=clamp(1-G.wT.pri/iv,0,1),r=Math.round(k*3);if(r>0){ctx.fillStyle=(G.t*20|0)%2?'#7fe7ff':'#ffffff';ctx.fillRect(Math.round(P.x)-r+1,py-2-r,r*2-1,r*2-1);}}
   if(P.shield>0&&s.shieldMax>0){ctx.globalAlpha=0.35+0.25*(P.shield/s.shieldMax)+(P.shieldDelay>2.7?0.4:0);pcircle(P.x,P.y,10,'#7fe7ff');ctx.globalAlpha=1;}
@@ -895,7 +938,7 @@ function refreshStore(){
   const skn=(C.skins.find(x=>x.id===S.skin)||C.skins[0]).name;
   const rows=[['Credits',fmt(S.credits)],['Income','+'+fmt(S.cps)+'/s'],['Wave',S.wave],['Best wave ever',S.best],['Cleared this run',S.maxWave],['Total kills',fmt(S.kills)],['Bosses destroyed',S.bossKills],['Mega bosses slain',S.finalKills|0],['Ship skin',skn],['Hull breaches',S.deaths],['Total credits earned',fmt(S.totalCredits)],['Warp jumps',S.warps],['Dark Matter (total)',fmt(S.dmTotal)],
    ['Primary',WMAP[S.pri].name+' LV'+S.wl[S.pri]],['Secondary',S.sec?WMAP[S.sec].name+' LV'+S.wl[S.sec]:'-'],
-   ['DPS (est.)',fmt(gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*s.drones/0.9)],['Max hull',fmt(s.maxHull)],['Play time',fmtTime(S.playTime)]];
+   ['DPS (est.)',fmt(gunDps(S.pri,S.wl[S.pri],false)+podDps()+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*s.drones/0.9)],['Max hull',fmt(s.maxHull)],['Play time',fmtTime(S.playTime)]];
   const h=rows.map(r=>'<tr><td>'+r[0]+'</td><td>'+r[1]+'</td></tr>').join('');const t=$('#statTable');if(t._h!==h){t._h=h;t.innerHTML=h;}
   refreshSkins();
  }
@@ -925,7 +968,7 @@ function openNotes(){
 }
 $('#importBtn').addEventListener('click',openImport);
 function doReset(){noSave=true;lsDel(KEY);lsDel(KEY+'_bak');noSave=false;S=fresh();S.seenVersion=VERSION;resetRun();toast('PROGRESS RESET');save();}
-function resetRun(){recalc();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.dead=false;G.pb=[];G.caps=[];G.droneT=[];G.captured=0;G.overT=0;G.megaHold=null;G.wT={pri:0,sec:0};G.buckets=[];G.sector=-1;startWave();refreshStore();}
+function resetRun(){recalc();G.p.hull=G.s.maxHull;G.p.shield=G.s.shieldMax;G.dead=false;G.pb=[];G.caps=[];G.droneT=[];G.captured=0;G.overT=0;G.megaHold=null;G.wT={pri:0,sec:0};G.buckets=[];G.sector=-1;G.podHist.length=0;startWave();refreshStore();}
 function askWarp(){const g=dmGain();if(g<=0)return;modal('WARP JUMP?','Reset credits, upgrades, gun levels and waves for <b style="color:#ff5ccf">+'+fmt(g)+' Dark Matter</b>. Unlocked guns are kept.',[{t:'CANCEL'},{t:'JUMP',cls:'warpbtn',fn:doWarp}]);}
 function doWarp(extra,forced){const g=dmGain();if(!(g>0)&&!forced)return;const prev=storeCtx();if(g>0){S.dm+=g;S.dmTotal+=g;S.warps++;}S.credits=0;UPG.forEach(u=>S.u[u.id]=0);WEAP.forEach(w=>{if(S.wl[w.id]>1)S.wl[w.id]=1;});
  S.wave=1+5*S.d.warp;S.maxWave=0;S.megaPaid=0;S.best=Math.max(S.best,S.wave);G.warpFx=1.5;G.flash=1;SFX.warp();resetRun();
@@ -1010,6 +1053,6 @@ function simRun(sec,taps){const dt=1/30;let tapT=0,sampT=0;G.ms=G.ms||{n:0,sum:0
   if(taps&&!G.dead){tapT-=dt;while(tapT<=0){tapT+=1/taps;let tg=null;for(const e of G.enemies)if(targetable(e)&&e.y>0&&e.y<H&&(!tg||e.y>tg.y))tg=e;
    if(tg){const wk=tg.parts&&tg.parts.find(p=>p.kind==='weak');const b={x:tg.x+(wk?wk.ox:0),y:tg.y+(wk?wk.oy:0),py:tg.y+(wk?wk.oy:0),r:3};const where=findHit(tg,b)||'body';applyHit(tg,where,G.s.click,true,b.x,b.y);G.enemies=G.enemies.filter(e=>!e.dead);}}}
   sampT-=dt;if(sampT<=0){sampT=0.5;const n=G.enemies.filter(e=>e.y>0&&e.y<H&&!e.boss).length;G.ms.n++;G.ms.sum+=n;G.ms.max=Math.max(G.ms.max,n);}}}
-function playerST(taps){const s=G.s;return gunDps(S.pri,S.wl[S.pri],false)+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*Math.max(0,s.drones-G.captured)/0.9+taps*s.click*(1+s.crit*2);}
+function playerST(taps){const s=G.s;return gunDps(S.pri,S.wl[S.pri],false)+podDps()+(S.sec?gunDps(S.sec,S.wl[S.sec],true):0)+s.droneDmg*Math.max(0,s.drones-G.captured)/0.9+taps*s.click*(1+s.crit*2);}
 window.__IV={pause(v){G.paused=!!v;},VERSION,C,A,ET,AIS,pickType,pickTarget,aimPoint,bossFor,bossTier,storeCtx,waveCtx,feat,migrate,fresh,parseImport,update,render,openNotes,get S(){return S},set S(v){S=v;},resetRun,G,HPK,HP_CAP_WAVE,HP_BEND_WAVE,HP_LATE_MULT,DMG_LATE,sim:simRun,playerST,eHP:w=>eHP(w),eDmg:w=>eDmg(w),startWave,spawnBoss,BOSSES,mkEnemy,spawnInvaderGroup,hurtLimb,isMegaWave,megaPhaseText,megaReward,nextPhase,die,step(sec,dt){dt=dt||1/60;for(let x=0;x<sec;x+=dt)update(dt);render();refreshStore();},recalc,save,load,refreshStore,dmGain,exportCode,importText,showTab,KEY};
 })();
