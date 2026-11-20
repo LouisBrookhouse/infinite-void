@@ -60,7 +60,7 @@ IV.content.enemies.push(
    ctx.fillRect(Math.round(e.x+e.w/2-4),y,2,2);
   }},
  {id:'mine',name:'MINE',unlock:{wave:24},weight:0,hp:0.16,rew:0.15,spd:0,fire:0,dmg:0.45,shots:0,ai:'custom',
-  sprite:{half:["...r.ryy","..ryyyyy",".ryyoooo","ryyooooo",".ryooooo","ryoooooo",".ryooooo","ryyooooo",".ryyoooo","..ryoooo",".r.ryooo","..r.r.oo","...r.r.o"]},
+  sprite:{half:["........",".......n","......nn",".....ngg","....nddg","..nndddd","....nddd",".....ndd","......nn",".......n","........","........","........"]},
   init(e){e.counts=false;e.noBob=true;e.life=e.life||13.5;e.fuse=0;e.near=0;},
   update(e,dt,A){
    if(e.fuse>0){e.fuse-=dt;e.flash=0.1;if(e.fuse<=0&&!e.dead)A.kill(e);return;}

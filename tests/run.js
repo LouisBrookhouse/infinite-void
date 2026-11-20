@@ -638,21 +638,11 @@ async latescale(){
    const m=I.mkEnemy('mine',{x:I.G.p.x,y:I.G.p.y,counts:false});m.life=30;m.born=I.G.t-1;
    const h=I.G.p.hull;I.update(dt);return h-I.G.p.hull;
   }
-  function back(bid,seg){
-   I.S.wave=125;I.G.enemies.length=0;I.G.pb.length=0;I.G.toSpawn=0;I.G.bossT=30;
-   I.G.wT.pri=10;I.G.wT.sec=10;I.G.s.rate=0;I.G.s.drones=0;I.G.droneT.length=0;
-   I.spawnBoss(I.BOSSES.find(b=>b.id===bid));
-   const boss=I.G.boss;boss.y=-40;
-   const p=boss.parts.find(q=>seg?q.seg===seg:q.kind==='wall'&&q.ox===0);
-   const max=p.maxHp;p.hp=0;p.down=0.05;I.update(0.1);
-   return {hp:p.hp,max,down:p.down};
-  }
   const mine125=mob(125,'mine'),mine140=mob(140,'mine'),scout125=mob(125,'scout'),scout140=mob(140,'scout');
   I.S.wave=125;I.spawnBoss(I.BOSSES.find(b=>b.id==='core'));const core125=I.G.boss.maxHp;I.G.boss.dead=true;
   I.S.wave=140;I.spawnBoss(I.BOSSES.find(b=>b.id==='core'));const core140=I.G.boss.maxHp;
   return {save,math,end,snap,bosses:bosses.filter(b=>b.wave>=100&&b.id!=='maw'),rows,
-   mine125,mine140,scout125,scout140,core125,core140,bolt125:bolt(125),bolt140:bolt(140),touch125:touch(125),touch140:touch(140),
-   wall:back('core'),plate:back('bio',2)};
+   mine125,mine140,scout125,scout140,core125,core140,bolt125:bolt(125),bolt140:bolt(140),touch125:touch(125),touch140:touch(140)};
  },code);
  assert.ok(!r.err,r.err);
  const s=r.save;
@@ -696,11 +686,10 @@ async latescale(){
  }
  const core125=r.rows.find(x=>x.bid==='core'&&x.wave===125);
  const bio125=r.rows.find(x=>x.bid==='bio'&&x.wave===125);
- assert.ok(Math.abs(core125.aim)<=core125.weakW/2,'Big Core aim sits on the weak column');
- assert.strictEqual(core125.covered,0,'Big Core aim is a gap, not a shield');
- assert.ok(bio125.covered>=1,'Xeno aim sits on the plate that covers the core');
- assert.strictEqual(r.wall.hp,r.wall.max);assert.strictEqual(r.wall.down,0);
- assert.strictEqual(r.plate.hp,r.plate.max);assert.strictEqual(r.plate.down,0);
+ assert.ok(liveCore&&liveCore.kill&&liveCore.dt<35,'idle Big Core wave 120 dies before the 35s escape ('+(liveCore&&liveCore.dt)+'s)');
+ assert.ok(liveBio&&liveBio.kill&&liveBio.dt<35,'idle Xeno Biomech wave 125 dies before the 35s escape ('+(liveBio&&liveBio.dt)+'s)');
+ assert.ok(core125&&core125.kill&&core125.t<35,'isolated Big Core wave 125 dies before the 35s escape ('+(core125&&core125.t)+'s)');
+ assert.ok(bio125&&bio125.kill&&bio125.t<35,'isolated Xeno Biomech wave 125 dies before the 35s escape ('+(bio125&&bio125.t)+'s)');
  log('  latescale: wave '+r.end.wave+' in '+r.end.t+'s, 0 new deaths | live core120 '+liveCore.dt+'s bio125 '+liveBio.dt+'s | isolated core125 '+core125.t+'s bio125 '+bio125.t+'s (escape 35s) | eHP125 '+Math.round(m.hp125)+' eDmg130/125 '+(m.d130/m.d125).toFixed(3));
  await page.evaluate(id=>{
   const I=__IV;I.S.wave=125;I.S.auto=false;I.recalc();

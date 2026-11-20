@@ -5,10 +5,10 @@
 IV.content.changelog.push(
  {version:'1.4.2',date:'2026-11-20',title:'SAME HAND',
   fixed:[
-   'Mine Layers, mines, Option Pods, Big Core shields, Xeno plates, and THE MAW are painted with the same pixels as the scouts and the ship.',
+   'Mine Layers, mines, Option Pods, Big Core shields, Xeno plates, and THE MAW are painted with the same pixels as the scouts and the ship. Mines are small dark orbs. THE MAW is a dark wall of flesh.',
   ],
   balance:[
-   'Fights are unchanged. An idle run still reaches wave 10. A 30 minute run still stalls at wave 44, and a warp still pays +13 Dark Matter.',
+   'Big Core shields stack again and do not grow back. Xeno plates block shots and do not crack. Health still stops climbing after wave 125. An idle run still reaches wave 10. A 30 minute run still stalls at wave 44, and a warp still pays +13 Dark Matter.',
   ],
   gate:'The new paint is on things you already meet. A fresh save still starts with scouts.'},
  {version:'1.4.1',date:'2026-11-20',title:'VERDANT HAZE',

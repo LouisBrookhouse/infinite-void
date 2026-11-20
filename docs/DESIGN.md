@@ -49,7 +49,7 @@ Sprites use fixed palette letters, not sector X/Y. The layer is a 25×11 barge w
 One model for every fight. The ship moves horizontally toward the aim x. Primary guns fire their normal patterns from the ship. They are not turned toward a part.
 
 1. An enemy overlapping the hull (within about 10 by 12px) is the target. That is the only time something on top of the ship wins.
-2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. On Big Core and Xeno Biomech the aim x is a gap that still crosses the weak point. If a plate covers that column, the ship sits on the front plate until it breaks. Primary guns still fire straight.
+2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. Big Core and Xeno Biomech use that same body aim. Primary guns still fire straight.
 3. With no boss, an enemy below y = H-75 wins, then a mine field of 6 or more (the mine nearest the ship), then the lowest other enemy.
 
 Homing missiles curve toward the nearest target on their own. Drones pick a live enemy and fire toward its aim point. Neither has a boss-only rule or a Maw-only rule.
@@ -224,7 +224,7 @@ An animation is two full frames (`full` and `full2` on the invader), not a tween
 Do not copy these into a new sprite: the rock's mid tone `#9c8670`, the v1.0 missile speck `#cfd6e6`, planet colors that are not in the master list (The Deep uses `#ffb0b8` and `#2a0b14`), and the UI bar `#3b0b14`. New sprites use `PAL` only.
 
 ### Bosses and meta threats
-A boss may be bigger. It still uses this rim, these ramps, and this light. THE MAW's wall is a Bayer field. Tentacles, eyes, plates, and shields are discrete bands. Part sizes stay put when only the paint changes. A meta threat stays outside this pixel style. See Meta threats.
+A boss may be bigger. It still uses this rim, these ramps, and this light. THE MAW's wall is a Bayer field in a 4-tone flesh ramp (`#0b0f1e`, `#1b2b5a`, `#5a2a7a`, `#6b5a4a`), lit from the upper left like the planets, with the brightest tone only as a sparse highlight. Tentacles use that same ramp and stay darker than the wall: the body is the second tone, and the last tone sits only on the lit edge. Eyes and the mouth are the bright points (bone teeth, a red iris). No yellow on the creature. A mine keeps its 15×13 hitbox and draws a small dark metal orb inside it, navy outline, a gray top speck, and the blinking red core from its `draw`. A meta threat stays outside this pixel style. See Meta threats.
 
 ## Balance philosophy
 - Through wave 100, enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). After wave 100, health follows the late cap below and does not go back to 19% a wave. Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
@@ -240,15 +240,9 @@ Health uses the classic curve through wave 100 (`HP_BEND_WAVE`), including THE M
 
 Shot, ram, and mine-touch damage still use `eDmg`. Through wave 125 that is `1.11^(wave-1)`, same as before. After wave 125, damage grows by `DMG_LATE` (**1.12**) per wave, and by `HPK.sec` (**1.2**) for each sector past `sectorOf(125)`. That is the old per-sector health step, with a per-wave rate between the old 11% hit growth and the old 19% health growth. A full 19% per wave deleted the reference save on the next Big Core. Wave 140 damage is `1.12^15 × 1.2` (about 6.6×) wave-125 damage, at the same health.
 
-Big Core's three shields are offset, with a gap over the weak point, 8% of boss health each, and they return 11s after they break. Xeno Biomech's center plate has 3.2×`eHP`, covers the weak point, and returns 14s after it cracks. Side plates stay off that column. Auto-aim uses the gap, or the plate that blocks it.
+Big Core and Xeno Biomech keep the shield and plate behaviour from before 1.2.3 (`3cde506`, the parent of PR #11). Big Core's three walls are stacked on `ox = 0`, each 14×4 and 10% of the boss's max health, and they do not grow back. A hit on the guarded core is spent on the lowest live wall. Xeno's five plates are invulnerable 6×6 blocks with no `maxHp`. They sway across the body (`ox = sin(t) * (3 + i * 2.6)`) and a shot that meets one tinked off. There is no aim special-case for either boss. The ship aims at the body.
 
-On 2026-11-20 Louis asked to put the pre-1.2.3 shield and plate behaviour back (stacked Big Core walls, invulnerable swaying Xeno plates, no regrow, no aim special-case) and to keep this cap, because the personality was the classic mechanic and the problem was the health pool. That restore does not ship. `tests/run.js` latescale locks the 1.2.3 layout, and `tests/` cannot change on a daily update:
-
-- `Big Core aim sits on the weak column`, then `Big Core aim is a gap, not a shield` (`covered === 0`). The old stacked walls sit on that column.
-- `Xeno aim sits on the plate that covers the core` (`covered >= 1`).
-- A broken center wall and a broken center plate, set to `hp = 0` and `down = 0.05` and updated for 0.1s, come back to `hp === max` and `down === 0`. The classic walls do not regrow, and the classic plates have no `maxHp`.
-
-The live fight stays the 1.2.3 layout. The cap is still the balance tool. 1.4.2 only repaints the shields and plates. Kill times against the 35s escape timer are whatever that suite prints. Do not edit the suite to force the old layout.
+The health cap is the balance tool. Wall and plate layout stay classic. Their health numbers stay the classic fractions. On Louis's save, idle play still kills both before the 35s escape: Big Core at wave 120 in 10s, Xeno Biomech at wave 125 in 34.8s. Isolated at wave 125 those times are 10.67s and 17.33s.
 
 ### Guardrails (CI enforced, `tests/guardrails.json`)
 A deterministic seeded sim (greedy buyer, 8 taps/s) must satisfy:

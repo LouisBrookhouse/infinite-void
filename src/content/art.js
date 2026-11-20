@@ -38,7 +38,10 @@
    if(d>=rim)col=ramp[0];
    else{
     const inv=d>0.2?1/d:0,light=litUL(i*inv,j*inv);
-    let k=light>0.78?n-1:light>0.58?n-2:light<0.32?1:2;
+    const edge=d>=rim-1.15;
+    let k=1;
+    if(edge&&light>0.66)k=n-1;
+    else if(light>0.84)k=Math.min(2,n-2);
     if(k<1)k=1;if(k>n-1)k=n-1;col=ramp[k];
    }
    ctx.fillStyle=col;ctx.fillRect(ix+i,iy+j,1,1);
