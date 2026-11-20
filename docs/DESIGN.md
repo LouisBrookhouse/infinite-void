@@ -29,7 +29,7 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | wave 2-10 | Rapid Cycler (2), Dual Fighter and Fighters (3), Divers (4), Targeting AI (4), Nano Repair and Invader grid and first boss Dreadnought (5), Spread Gun and Spread Array (6), Kamikazes (7), Escort Drones (8), Homing Missiles and Cruisers (9), Deflector and Boss Galaga (10) |
 | sector 2 (wave 11-20) | Nebula Drift. Secondary gun slot and Shielded Guards (12), Laser (13), Rocks (14), Mothership (15), Snipers (16), Ring Laser (17), Big Core (20) |
 | wave 20 | **Warp Jump** available (run-based: clear wave 20 this run) |
-| sector 3+ | Verdant Belt (21), Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Option Pods (26), Solar Forge (31), The Deep (41) |
+| sector 3+ | Verdant Belt (21) and its nebula clouds, Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Option Pods (26), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
 | sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
 | future | Missions, more skins (R13), sector modifiers, meta threats (wave 100 and deeper), and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
@@ -57,11 +57,16 @@ Homing missiles curve toward the nearest target on their own. Drones pick a live
 ### Option Pods
 Ship upgrade `pods` (max 1, ¢1,500, best wave 26). Two orbs trail the ship. `shootGun` copies each primary shot from both orbs at 40% damage and the same velocity. The copies are not aimed at a part and do not gain homing. A homing primary still copies homing, because that is the shot. Secondary guns are not copied. The level resets on Warp Jump with the other ship upgrades. The gate stays open once best wave is 26. A fresh save is level 0, so the orbs are absent.
 
+### Verdant Belt clouds
+Sector `verdant-belt` sets `clouds:{a,b,h}` in that sector's greens (`#0d2a1c`, `#2e8b57`, `#6bff8a`). While that picture is the active sector art, six pixel clouds scroll down behind the stars and in front of the planet. Speeds stay under the far star layer (about 0.8 to 2.9 px/s, against 5). The body is `b`, the bright core is `h`. A private seed places them, so the layer does not pull numbers from `Math.random`.
+
+The gate is the sector unlock, checked against the current wave, and only this picture sets `clouds`. Outer Rim and Nebula Drift never draw them, including after a Warp Jump back to wave 1. When the five pictures cycle, sector 8 uses Verdant Belt again and the nebula returns. Solar Forge and The Deep do not.
+
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
 
 - **changelog.js**: newest first, `{version, date, title, added[], balance[], fixed[]?, gate?}`. The top entry is the game version (the only place it lives).
-- **sectors.js**: `{id, name, unlock:{sector:n}, scheme:{X,Y}, bg, planet:[3], bias:{enemyId:mult}}`. Position must equal its sector number. The list cycles after the last entry.
+- **sectors.js**: `{id, name, unlock:{sector:n}, scheme:{X,Y}, bg, planet:[3], bias:{enemyId:mult}, clouds?:{a,b,h}}`. Position must equal its sector number. The list cycles after the last entry. `clouds` is optional pixel-nebula colours for that picture only. See Verdant Belt clouds.
 - **skins.js**: `{id, name, unlock, half:[rows]}`. `S.skin` is the equipped id. `S.skins[id] = 1` means owned. SAVE/STATS lists a skin when it is the starter, owned, or its gate is open, and only an owned skin can be equipped. A boss award sets the owned flag once; the registry `unlock` is what keeps it off a fresh save.
 - **icons.js**: `id -> [rows]`. `ship` and `drone` are special icons.
 - **upgrades.js**: credit upgrades `{id, name, desc, icon, base, g, max?, req?, unlock, show(stats, level)}`, with effects in `calcStats()`. Dark Matter `{id, icon, name, desc, base, g, max?, unlock, show(level)}`.
@@ -166,7 +171,7 @@ A hull breach runs the Warp Jump reset immediately: credits, ship upgrades and g
 
 The payout is `dmGain()` at that moment, the same number the Warp Jump button would pay, with no Maw bounty added. `dmGain()` is 0 until `maxWave` is at least 20, so an early death pays nothing. A zero payout still resets the run, but it does not increment `S.warps`, so it cannot open warp-gated upgrades. Once `dmGain()` is above 0, the death increments `S.warps` and banks that Dark Matter, then sets `maxWave` back to 0, so a second death cannot farm more than one voluntary warp at the same peak.
 
-Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged.
+Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged. Hull regen is `maxHull * (0.004 + 0.003 * Nano Repair level)`. The 0.004 is always on, so a ship heals a little before that upgrade is bought. 1.4.0 added it. An idle run reaches wave 10 again. The active 30 minute stall stays at wave 44.
 
 ## Balance philosophy
 - Through wave 100, enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). After wave 100, health follows the late cap below and does not go back to 19% a wave. Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
