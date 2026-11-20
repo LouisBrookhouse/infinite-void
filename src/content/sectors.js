@@ -1,7 +1,7 @@
 /* SECTORS: one per 10 waves (sector n = waves (n-1)*10+1 .. n*10). The list cycles after the last entry.
  * Contract: {id, name, unlock:{sector:n} (must equal its 1-based position), scheme:{X,Y} enemy colours,
  *  bg: background colour, planet:[dark,mid,light], bias:{enemyId:weightMultiplier},
- *  clouds?:{a,b,h} pixel nebula colours. Drawn only while this picture is active, so unlock is the gate.} */
+ *  clouds?:{a,b,h} dither palette for the nebula (dark, mid, highlight). Drawn only while this picture is active.} */
 IV.content.sectors.push(
  {id:'outer-rim',name:'OUTER RIM',unlock:{sector:1},scheme:{X:'#ff4d5e',Y:'#ff9f1c'},bg:'#05070f',planet:['#1b2b5a','#2a6fdb','#7fe7ff'],bias:{}},
  {id:'nebula-drift',name:'NEBULA DRIFT',unlock:{sector:2},scheme:{X:'#b14aed',Y:'#ff5ccf'},bg:'#0a0514',planet:['#3a0b33','#b14aed','#ff5ccf'],bias:{invader:2.5,diver:2}},

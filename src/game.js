@@ -54,39 +54,90 @@ function rockSpr(size){const k=size+'_'+((Math.random()*3)|0);if(rockCache[k])re
   row+=d>rr?'.':d>rr-1.1?'h':(dx+dy<-1?'f':(Math.sin(i*1.7+j*2.3+seed)>0.75?'h':'g'));}rows.push(row);}
  return rockCache[k]=makeSprite(rows,{g:'#9c8670'});}
 
+const BAYER=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];
+function bayer(i,j){return BAYER[(j&3)*4+(i&3)]/16;}
 function makePlanet(sec){
  const c=document.createElement('canvas');c.width=56;c.height=56;const x=c.getContext('2d');const cols=PLANETC[sec%PLANETC.length];
- const B=[0,8,2,10,12,4,14,6,3,11,1,9,15,7,13,5];const r=20,cx=28,cy=28;
+ const r=20,cx=28,cy=28;
  for(let j=0;j<56;j++)for(let i=0;i<56;i++){const dx=i-cx+.5,dy=j-cy+.5,d=dx*dx+dy*dy;
   if(d<=r*r){const nz=Math.sqrt(r*r-d)/r,l=(-dx/r*0.6-dy/r*0.6+nz*0.55);const band=Math.sin(dy*0.5+dx*0.08)*0.08;
-   const v=clamp(l+band,0,1)*2.2+B[(j%4)*4+i%4]/16-0.5;x.fillStyle=cols[clamp(Math.floor(v),0,2)];x.globalAlpha=0.55;x.fillRect(i,j,1,1);}
+   const v=clamp(l+band,0,1)*2.2+bayer(i,j)-0.5;x.fillStyle=cols[clamp(Math.floor(v),0,2)];x.globalAlpha=0.55;x.fillRect(i,j,1,1);}
   else if(Math.abs(dy*2.6+dx*0.9)<3&&d<27*27&&!(dy<0&&d<r*r+30)){x.globalAlpha=0.35;x.fillStyle=cols[1];x.fillRect(i,j,1,1);}}
  return c;
 }
-const CLOUD_ROWS=[
- ['....bbbb....','..bbbbbbbb..','.bbbhhhhbbb.','bbbbhhbbhbbb','.bbbhhhhbbb.','..bbbbbbbb..','...bb..bb...'],
- ['..bbb.......','bbbbbbb.....','bbhhhhbbbb..','.bbbhhbbbbb.','..bbbbbbbb..','....bbbb....'],
- ['.....bbb....','.bbbbbbbb...','bbbhhbbhbbb.','bbhhhbbbbbb.','..bbbbbbbb..','....bbb.....'],
- ['...bbb......','bbbbbbbb....','.bbhhbbbbb..','..bbbhhbbb..','...bbbbbb...','.....bbb....']];
+function hexRgb(h){const n=parseInt(h.slice(1),16);return [(n>>16)&255,(n>>8)&255,n&255];}
+function mixRgb(a,b,t){return [(a[0]+(b[0]-a[0])*t)|0,(a[1]+(b[1]-a[1])*t)|0,(a[2]+(b[2]-a[2])*t)|0];}
+function nebHash(ix,iy,s){let n=Math.imul(ix+s*13,374761393)^Math.imul(iy+s*7,668265263);n=Math.imul(n^(n>>>13),1274126177);return ((n^(n>>>16))>>>0)/4294967296;}
+function nebNoise(x,y,px,py,s){
+ const x0=Math.floor(x),y0=Math.floor(y),fx=x-x0,fy=y-y0,sx=fx*fx*(3-2*fx),sy=fy*fy*(3-2*fy);
+ const ix=((x0%px)+px)%px,iy=((y0%py)+py)%py,ix1=(ix+1)%px,iy1=(iy+1)%py;
+ const a=nebHash(ix,iy,s),b=nebHash(ix1,iy,s),c=nebHash(ix,iy1,s),d=nebHash(ix1,iy1,s);
+ return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;
+}
+function nebFbm(u,v,freq,seed,oct){let f=0,a=0.5,m=0,fr=freq;for(let o=0;o<oct;o++){f+=a*nebNoise(u*fr,v*fr,fr,fr,seed+o*17);m+=a;fr*=2;a*=0.5;}return f/m;}
+function nebSmooth(e0,e1,x){const t=clamp((x-e0)/(e1-e0),0,1);return t*t*(3-2*t);}
+function nebLobe(x,y,cx,cy,rx,ry,seed){
+ const dx=(x-cx)/rx,dy=(y-cy)/ry,a=Math.atan2(dy,dx);
+ const wob=0.78+0.2*Math.sin(a*3+seed)+0.12*Math.sin(a*5+seed*1.4)+0.08*Math.sin(a*2+seed*0.6);
+ const dist=Math.hypot(dx,dy)/wob;if(dist>=1)return 0;const t=1-dist;return t*t*(3-2*t);
+}
+function nebArm(x,y,x0,y0,x1,y1,w,seed){
+ const dx=x1-x0,dy=y1-y0,len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len;
+ let t=((x-x0)*dx+(y-y0)*dy)/(len*len);t=t<0?0:t>1?1:t;
+ const bend=Math.sin(t*Math.PI)*22+Math.sin(t*6.2+seed)*7;
+ const dist=Math.hypot(x-(x0+dx*t+nx*bend),y-(y0+dy*t+ny*bend)),width=w*(0.4+0.7*Math.sin(t*Math.PI));
+ if(dist>=width)return 0;const u=1-dist/width;return u*u;
+}
+function nebShape(x,y,seed,far){
+ let d=0;
+ for(let k=-1;k<=1;k++){const yy=y+k*H;
+  if(far){d=Math.max(d,nebLobe(x,yy,100,38,96,44,seed),nebLobe(x,yy,40,186,72,50,seed+1.7),nebArm(x,yy,100,50,40,170,9,seed)*0.7);}
+  else d=Math.max(d,nebLobe(x,yy,48,68,76,54,seed),nebLobe(x,yy,126,158,54,66,seed+2.2),nebArm(x,yy,62,90,118,146,13,seed)*0.85,nebArm(x,yy,126,186,164,232,7,seed+4)*0.65);
+ }
+ return d;
+}
+function nebField(i,j,seed,far){
+ const u=i/W,v=j/H;
+ const x=i+(nebFbm(u,v,2,seed,3)-0.5)*(far?28:40),y=j+(nebFbm(u+0.31,v+0.17,2,seed+5,3)-0.5)*(far?22:34);
+ let d=nebShape(x,y,seed,far)*(0.9+0.2*nebFbm(u,v,2,seed+11,3));
+ const ridge=1-Math.abs(nebFbm(u+0.13,v,3,seed+29,3)*2-1);
+ d=Math.max(d,nebSmooth(0.84,0.96,ridge)*nebSmooth(0.15,0.5,d)*(far?0.45:0.62));
+ return clamp(d*(far?0.85:1),0,1);
+}
+function paintNebula(seed,spec,far){
+ const c=document.createElement('canvas');c.width=W;c.height=H;const g=c.getContext('2d');g.imageSmoothingEnabled=false;
+ const img=g.createImageData(W,H),pix=img.data,field=new Float32Array(W*H);
+ const A=hexRgb(spec.a),B=hexRgb(spec.b),Hh=hexRgb(spec.h);
+ const tones=[A,mixRgb(A,B,0.5),B,mixRgb(B,Hh,far?0.12:0.3)];
+ const al=far?[86,98,106,110]:[124,136,146,150];
+ for(let j=0;j<H;j++)for(let i=0;i<W;i++)field[j*W+i]=nebField(i,j,seed,far);
+ const pts=[];
+ for(let j=0;j<H;j++)for(let i=0;i<W;i++){
+  const d=field[j*W+i];if(d<=0.02)continue;const bv=bayer(i,j);if(bv>d)continue;
+  const s=6,il=i-s<0?0:i-s,ir=i+s>=W?W-1:i+s,ju=j-s<0?0:j-s,jd=j+s>=H?H-1:j+s;
+  const gx=field[j*W+ir]-field[j*W+il],gy=field[jd*W+i]-field[ju*W+i],gl=Math.hypot(gx,gy)||1,nd=(gx+gy)*0.707/gl;
+  const light=clamp(0.2+d*0.34+nd*0.48+Math.sin(j*0.045+i*0.02)*0.06,0,1);
+  const tone=clamp((light*3.05+bv-0.48)|0,0,3),col=tones[tone],p=(j*W+i)*4;
+  pix[p]=col[0];pix[p+1]=col[1];pix[p+2]=col[2];pix[p+3]=al[tone];
+  if(!far&&d>0.62&&nebHash(i,j,seed+99)>0.9975)pts.push(i,j);
+ }
+ const dim=hexRgb('#7383bb'),hot=hexRgb('#ffffff');
+ const stamp=(x,y,col,a)=>{if(x<0||y<0||x>=W||y>=H)return;const p=(y*W+x)*4;pix[p]=col[0];pix[p+1]=col[1];pix[p+2]=col[2];pix[p+3]=a;};
+ for(let k=0;k<pts.length;k+=2){const i=pts[k],j=pts[k+1],glow=nebHash(i+3,j+1,seed)>0.55;
+  stamp(i,j,glow?hot:dim,glow?188:156);
+  if(glow){stamp(i-1,j,dim,130);stamp(i+1,j,dim,130);stamp(i,j-1,dim,130);stamp(i,j+1,dim,130);}
+ }
+ g.putImageData(img,0,0);return c;
+}
 function buildClouds(sec){
  const def=SECTORS[((sec%SECTORS.length)+SECTORS.length)%SECTORS.length],spec=def&&def.clouds;
  if(!spec||!IV.gateOpen(def.unlock,waveCtx(sec*10+1)))return null;
- const col={a:spec.a,b:spec.b,h:spec.h};
- let s=((sec+1)*0x9E3779B1)>>>0;
- const r=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
- const out=[];
- for(let i=0;i<6;i++)out.push({x:(i+r())/6*W,y:(i+r()*0.65)/6*(H+16)-8,v:0.8+r()*2.1,rows:CLOUD_ROWS[i%CLOUD_ROWS.length],px:2,al:0.58+r()*0.18,col});
- return out;
+ let s=0x9E3779B1;const r=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
+ return [{c:paintNebula(0x51E0,spec,true),y:r()*H,v:0.32},{c:paintNebula(0xA31C,spec,false),y:r()*H,v:0.78}];
 }
 function drawClouds(){
  const cs=G.clouds;if(!cs)return;
- for(const cl of cs){
-  const rows=cl.rows,px=cl.px,col=cl.col,w=rows[0].length*px,h=rows.length*px;
-  const ox=Math.round(cl.x+Math.sin(G.t*0.17+cl.v)*5-w/2),oy=Math.round(cl.y-h/2);
-  ctx.globalAlpha=cl.al;
-  for(let j=0;j<rows.length;j++){const row=rows[j];for(let i=0;i<row.length;i++){const ch=row[i];if(ch==='.'||!col[ch])continue;ctx.fillStyle=col[ch];ctx.fillRect(ox+i*px,oy+j*px,px,px);}}
- }
- ctx.globalAlpha=1;
+ for(const cl of cs){const y=Math.round(cl.y);ctx.drawImage(cl.c,0,y);if(y)ctx.drawImage(cl.c,0,y-H);}
 }
 
 /* ---------- icons ---------- */
@@ -672,7 +723,7 @@ function update(dt){
  const s=G.s,P=G.p;G.t+=dt;S.playTime+=dt;
  const warpMul=G.warpFx>0?1+G.warpFx*12:1;
  for(const st of G.stars){st.y+=st.v*dt*warpMul;if(st.y>=H){st.y-=H;st.x=Math.random()*W;}}
- if(G.clouds){const m=H+40;for(const cl of G.clouds){cl.y+=cl.v*dt*warpMul;if(cl.y>=m)cl.y-=m;}}
+ if(G.clouds){for(const cl of G.clouds){cl.y+=cl.v*dt*warpMul;if(cl.y>=H)cl.y%=H;}}
  G.planetY+=dt*1.2;if(G.planetY>H+10){G.planetY=-70;G.planetX=rnd(20,W-20);}
  if(G.banner){G.banner.t-=dt;if(G.banner.t<=0)G.banner=null;}
  G.shake=Math.max(0,G.shake-dt*18);G.flash=Math.max(0,G.flash-dt*1.5);G.warpFx=Math.max(0,G.warpFx-dt*0.5);G.overT=Math.max(0,G.overT-dt);
@@ -802,8 +853,8 @@ function render(){
  ctx.setTransform(1,0,0,1,0,0);ctx.globalAlpha=1;
  ctx.fillStyle=BGCOL[G.sector%BGCOL.length]||BGCOL[0];ctx.fillRect(0,0,W,H);
  if(G.shake>0.3)ctx.translate(Math.round(rnd(-G.shake,G.shake)),Math.round(rnd(-G.shake,G.shake)));
- if(G.planet)ctx.drawImage(G.planet,Math.round(G.planetX-28),Math.round(G.planetY));
  drawClouds();
+ if(G.planet)ctx.drawImage(G.planet,Math.round(G.planetX-28),Math.round(G.planetY));
  const streak=G.warpFx>0?Math.ceil(G.warpFx*14):0;
  for(const st of G.stars){ctx.fillStyle=st.c;ctx.fillRect(st.x|0,st.y|0,1,1+(st.l===2?1:0)+streak*(st.l+1)/3);}
  for(const e of G.enemies){drawEnemy(e);if(e.boss)drawBossExtras(e);}
