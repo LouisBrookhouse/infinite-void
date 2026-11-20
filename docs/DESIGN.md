@@ -1,7 +1,7 @@
 # Design
 
 ## Pillars
-1. **Chunky retro pixels.** A 180x240 canvas scaled with nearest-neighbour. Sprites are hand-authored pixel rows (left half, auto-mirrored) in a small sci-fi palette. No smoothing, no image assets beyond tiny ones.
+1. **Chunky retro pixels.** A 180x240 canvas scaled with nearest-neighbour. Sprites are hand-authored pixel rows (left half, auto-mirrored) in a small sci-fi palette. No smoothing, no image assets beyond tiny ones. New sprites follow the Art style guide.
 2. **The screen is never empty.** Swarms stay dense and enemies take real hits to kill. Upgrades should *keep pace with* the curve, never trivialise it.
 3. **Idle-friendly, tap-rewarding.** The ship auto-fires and plays itself, and tapping (especially weak points) is meaningfully stronger.
 4. **Prestige is the release valve.** Progress stalls in a run, and Warp Jump (from wave 20) converts it into permanent Dark Matter power.
@@ -65,6 +65,7 @@ The gate is the sector unlock, checked against the current wave, and only this p
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
 
+- **art.js**: `IV.art`. Master palette, 4×4 Bayer, ramps, and the small blit helpers (`plate`, `pod`, `spore`, `disc`). Loaded immediately after `core.js`. The nebula and the planets call `IV.art.bayer`. See the Art style guide.
 - **changelog.js**: newest first, `{version, date, title, added[], balance[], fixed[]?, gate?}`. The top entry is the game version (the only place it lives).
 - **sectors.js**: `{id, name, unlock:{sector:n}, scheme:{X,Y}, bg, planet:[3], bias:{enemyId:mult}, clouds?:{a,b,h}}`. Position must equal its sector number. The list cycles after the last entry. `clouds` is an optional dark/mid/highlight palette. The engine dithers a nebula from it while that picture is active. See Verdant Belt clouds.
 - **skins.js**: `{id, name, unlock, half:[rows]}`. `S.skin` is the equipped id. `S.skins[id] = 1` means owned. SAVE/STATS lists a skin when it is the starter, owned, or its gate is open, and only an owned skin can be equipped. A boss award sets the owned flag once; the registry `unlock` is what keeps it off a fresh save.
@@ -173,6 +174,58 @@ The payout is `dmGain()` at that moment, the same number the Warp Jump button wo
 
 Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged. Hull regen is `maxHull * (0.004 + 0.003 * Nano Repair level)`. The 0.004 is always on, so a ship heals a little before that upgrade is bought. 1.4.0 added it. An idle run reaches wave 10 again. The active 30 minute stall stays at wave 44.
 
+## Art style guide
+
+Every future daily update's art follows this section. Before shipping a sprite, screenshot it next to the v1.0 scout, fighter, cruiser, and the player ship, and reject it if it looks like a different hand. AGENTS.md is owner-protected and is not edited from a daily branch. This section is the rule those updates follow. INDEX and OPERATIONS point here.
+
+### Grid
+The playfield is 180×240, one pixel, `imageSmoothingEnabled` false. No image files for sprites. Enemies draw 1:1, and `e.w` / `e.h` are the sprite size, so a longer row changes the hitbox. Keep the size when redrawing. Standard bosses draw at 2×, so the hitbox is the sprite times two. The player ship is 11×12. A standard enemy is about 9–13 wide and 6–12 tall. The escort drone and an Option Pod are 5×5. Boss bodies are larger and use the same grammar.
+
+### Outline
+There is no separate black stroke. The darkest ramp pixel is the rim (`d` `#3b4252`, `n` `#1b2b5a`, or `k` `#0b0f1e`). One white speck, or the lightest ramp color, sits on the top of a mirrored sprite and on the upper-left of an unmirrored one.
+
+### Palette
+`IV.art.PAL` in `src/content/art.js` is the master list. The engine uses the same object.
+
+| Letter | Hex | Role |
+|---|---|---|
+| `c` | `#7fe7ff` | cyan, cockpit, shield bar |
+| `w` | `#ffffff` | white speck |
+| `b` | `#2a6fdb` | blue |
+| `n` | `#1b2b5a` | navy rim |
+| `g` | `#8a94a6` | gray hull |
+| `d` | `#3b4252` | dark metal |
+| `r` | `#ff4d5e` | red |
+| `o` | `#ff9f1c` | orange |
+| `y` | `#ffe066` | yellow |
+| `p` | `#b14aed` | purple |
+| `m` | `#ff5ccf` | magenta |
+| `l` | `#6bff8a` | leaf highlight |
+| `e` | `#2e8b57` | leaf body |
+| `k` | `#0b0f1e` | near-black |
+| `v` | `#5a2a7a` | bruise |
+| `f` | `#c9b79c` | bone |
+| `h` | `#6b5a4a` | brown |
+
+A sprite uses 3 to 6 of these. `X` is the sector hull and `Y` is the sector engine. A fixed-palette enemy, including the Mine Layer and the mine, must not use `X` or `Y`. The mines suite checks that.
+
+### Light
+A mirrored sprite cannot shade left against right. The top rows are the highlight and the bottom rows are the shadow, with the dark rim on the outside. Large unmirrored fields (planets, the Verdant nebula, THE MAW's wall) use the 4×4 Bayer matrix `IV.art.BAYER` and the light `(-0.6, -0.6)`, the same vector as `makePlanet`. The darkest ramp color stays a hard rim so the silhouette reads. `IV.art.bayer` is the function the nebula calls. Do not change its output. Character-scale parts, shields, plates, and tentacles use discrete bands from `IV.art.RAMP`, not dither. Dither on a 9px scout, or on a stack of overlapping discs, looks like another artist.
+
+Ramps, dark to light, all master-palette hexes: `metal`, `hot`, `flesh`, `bruise`, `blood`, `heat`, `venom`, `leaf`, `bone`.
+
+### Frames
+An animation is two full frames (`full` and `full2` on the invader), not a tween. The hit flash is the white mask. A kamikaze alternates that mask. A cloaker changes alpha. There are no in-betweens.
+
+### Half rows
+`mirror()` pads each row to the longest and appends the reverse of every character except the last. That last character is the center column. Author it as body color so the seam does not stripe.
+
+### Leave these alone
+Do not copy these into a new sprite: the rock's mid tone `#9c8670`, the v1.0 missile speck `#cfd6e6`, planet colors that are not in the master list (The Deep uses `#ffb0b8` and `#2a0b14`), and the UI bar `#3b0b14`. New sprites use `PAL` only.
+
+### Bosses and meta threats
+A boss may be bigger. It still uses this rim, these ramps, and this light. THE MAW's wall is a Bayer field. Tentacles, eyes, plates, and shields are discrete bands. Part sizes stay put when only the paint changes. A meta threat stays outside this pixel style. See Meta threats.
+
 ## Balance philosophy
 - Through wave 100, enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). After wave 100, health follows the late cap below and does not go back to 19% a wave. Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
 - Kills per wave and max alive enemies rise with the wave (`needOf`, `maxAliveOf`, capped at 150 and 110).
@@ -188,6 +241,14 @@ Health uses the classic curve through wave 100 (`HP_BEND_WAVE`), including THE M
 Shot, ram, and mine-touch damage still use `eDmg`. Through wave 125 that is `1.11^(wave-1)`, same as before. After wave 125, damage grows by `DMG_LATE` (**1.12**) per wave, and by `HPK.sec` (**1.2**) for each sector past `sectorOf(125)`. That is the old per-sector health step, with a per-wave rate between the old 11% hit growth and the old 19% health growth. A full 19% per wave deleted the reference save on the next Big Core. Wave 140 damage is `1.12^15 × 1.2` (about 6.6×) wave-125 damage, at the same health.
 
 Big Core's three shields are offset, with a gap over the weak point, 8% of boss health each, and they return 11s after they break. Xeno Biomech's center plate has 3.2×`eHP`, covers the weak point, and returns 14s after it cracks. Side plates stay off that column. Auto-aim uses the gap, or the plate that blocks it.
+
+On 2026-11-20 Louis asked to put the pre-1.2.3 shield and plate behaviour back (stacked Big Core walls, invulnerable swaying Xeno plates, no regrow, no aim special-case) and to keep this cap, because the personality was the classic mechanic and the problem was the health pool. That restore does not ship. `tests/run.js` latescale locks the 1.2.3 layout, and `tests/` cannot change on a daily update:
+
+- `Big Core aim sits on the weak column`, then `Big Core aim is a gap, not a shield` (`covered === 0`). The old stacked walls sit on that column.
+- `Xeno aim sits on the plate that covers the core` (`covered >= 1`).
+- A broken center wall and a broken center plate, set to `hp = 0` and `down = 0.05` and updated for 0.1s, come back to `hp === max` and `down === 0`. The classic walls do not regrow, and the classic plates have no `maxHp`.
+
+The live fight stays the 1.2.3 layout. The cap is still the balance tool. 1.4.2 only repaints the shields and plates. Kill times against the 35s escape timer are whatever that suite prints. Do not edit the suite to force the old layout.
 
 ### Guardrails (CI enforced, `tests/guardrails.json`)
 A deterministic seeded sim (greedy buyer, 8 taps/s) must satisfy:

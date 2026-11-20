@@ -29,7 +29,7 @@ IV.content.enemies.push(
  {id:'cloaker',name:'CLOAKER',threat:'CLOAKERS',unlock:{wave:22},weight:1.5,squad:true,hp:1.3,rew:1.8,spd:50,fire:0.8,dmg:1.1,shots:1,ai:'cloak',
   sprite:{half:["X.....","XX....",".XX..d","..XXdY","..XdYY","...XdY","....Xw",".....X"]}},
  {id:'miner',name:'MINE LAYER',threat:'MINE LAYERS',unlock:{wave:24},weight:0,hp:2.4,rew:2.4,spd:64,fire:0,dmg:0.4,shots:0,ai:'custom',big:true,
-  sprite:{half:["......ddddddd","....ddddddddd","...ddgggggggg","..ddddooooooo","..dddooyooyoo","dddddoooooooy","..dddooyooyoo","..ddddooooooo","...dddddddddw","....ddddrdddd","......ddddddd"]},
+  sprite:{half:["..........ggg","........ggwgg","......ggggggg","....ggggggggg","..dgggggggggg","dggggoooooggg","dggggooyooggg","dggggoooooggr","ddddddddddddd","ddddddddddddd",".dddddddddddd"]},
   init(e,A){
    e.counts=false;e.noBob=true;e.row=0;e.si=0;
    e.dir=(Math.floor(A.S.wave/3)%2)?-1:1;
@@ -55,12 +55,12 @@ IV.content.enemies.push(
   },
   draw(e,A,ctx){
    const on=(A.G.t*6|0)%2,y=Math.round(e.y-1);
-   ctx.fillStyle=on?'#ff4d5e':'#7a1824';
+   ctx.fillStyle=on?'#ff4d5e':'#3b4252';
    ctx.fillRect(Math.round(e.x-e.w/2+2),y,2,2);
    ctx.fillRect(Math.round(e.x+e.w/2-4),y,2,2);
   }},
  {id:'mine',name:'MINE',unlock:{wave:24},weight:0,hp:0.16,rew:0.15,spd:0,fire:0,dmg:0.45,shots:0,ai:'custom',
-  sprite:{half:[".......r",".....ooo","....oooo","...ooooo","..rooooo",".ooooooo","rroooooy",".ooooooo","..rooooo","...ooooo","....oooo",".....ooo",".......r"]},
+  sprite:{half:["...r.ryy","..ryyyyy",".ryyoooo","ryyooooo",".ryooooo","ryoooooo",".ryooooo","ryyooooo",".ryyoooo","..ryoooo",".r.ryooo","..r.r.oo","...r.r.o"]},
   init(e){e.counts=false;e.noBob=true;e.life=e.life||13.5;e.fuse=0;e.near=0;},
   update(e,dt,A){
    if(e.fuse>0){e.fuse-=dt;e.flash=0.1;if(e.fuse<=0&&!e.dead)A.kill(e);return;}
@@ -83,7 +83,7 @@ IV.content.enemies.push(
   },
   draw(e,A,ctx){
    const x=Math.round(e.x),y=Math.round(e.y),on=(A.G.t*7|0)%2;
-   ctx.fillStyle=on?'#ff4d5e':'#3b0b14';ctx.fillRect(x,y,1,1);
+   ctx.fillStyle=on?'#ff4d5e':'#0b0f1e';ctx.fillRect(x,y,1,1);
    if(on){ctx.fillStyle='#ff9f1c';ctx.fillRect(x-1,y,1,1);ctx.fillRect(x+1,y,1,1);ctx.fillRect(x,y-1,1,1);ctx.fillRect(x,y+1,1,1);}
    if(e.life<2.4&&on){ctx.fillStyle='#ffffff';ctx.fillRect(x-1,Math.round(e.y-e.h/2),3,1);}
    if(!e.near)return;

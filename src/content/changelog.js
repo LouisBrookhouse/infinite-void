@@ -3,6 +3,14 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.4.2',date:'2026-11-20',title:'SAME HAND',
+  fixed:[
+   'Mine Layers, mines, Option Pods, Big Core shields, Xeno plates, and THE MAW are painted with the same pixels as the scouts and the ship.',
+  ],
+  balance:[
+   'Fights are unchanged. An idle run still reaches wave 10. A 30 minute run still stalls at wave 44, and a warp still pays +13 Dark Matter.',
+  ],
+  gate:'The new paint is on things you already meet. A fresh save still starts with scouts.'},
  {version:'1.4.1',date:'2026-11-20',title:'VERDANT HAZE',
   fixed:[
    'Verdant Belt clouds are a faint green haze now, shaded like the planets, drifting slowly behind the stars.',
