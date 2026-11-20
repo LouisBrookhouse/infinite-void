@@ -63,6 +63,31 @@ function makePlanet(sec){
   else if(Math.abs(dy*2.6+dx*0.9)<3&&d<27*27&&!(dy<0&&d<r*r+30)){x.globalAlpha=0.35;x.fillStyle=cols[1];x.fillRect(i,j,1,1);}}
  return c;
 }
+const CLOUD_ROWS=[
+ ['....bbbb....','..bbbbbbbb..','.bbbhhhhbbb.','bbbbhhbbhbbb','.bbbhhhhbbb.','..bbbbbbbb..','...bb..bb...'],
+ ['..bbb.......','bbbbbbb.....','bbhhhhbbbb..','.bbbhhbbbbb.','..bbbbbbbb..','....bbbb....'],
+ ['.....bbb....','.bbbbbbbb...','bbbhhbbhbbb.','bbhhhbbbbbb.','..bbbbbbbb..','....bbb.....'],
+ ['...bbb......','bbbbbbbb....','.bbhhbbbbb..','..bbbhhbbb..','...bbbbbb...','.....bbb....']];
+function buildClouds(sec){
+ const def=SECTORS[((sec%SECTORS.length)+SECTORS.length)%SECTORS.length],spec=def&&def.clouds;
+ if(!spec||!IV.gateOpen(def.unlock,waveCtx(sec*10+1)))return null;
+ const col={a:spec.a,b:spec.b,h:spec.h};
+ let s=((sec+1)*0x9E3779B1)>>>0;
+ const r=()=>{s=(Math.imul(s,1664525)+1013904223)>>>0;return s/4294967296;};
+ const out=[];
+ for(let i=0;i<6;i++)out.push({x:(i+r())/6*W,y:(i+r()*0.65)/6*(H+16)-8,v:0.8+r()*2.1,rows:CLOUD_ROWS[i%CLOUD_ROWS.length],px:2,al:0.58+r()*0.18,col});
+ return out;
+}
+function drawClouds(){
+ const cs=G.clouds;if(!cs)return;
+ for(const cl of cs){
+  const rows=cl.rows,px=cl.px,col=cl.col,w=rows[0].length*px,h=rows.length*px;
+  const ox=Math.round(cl.x+Math.sin(G.t*0.17+cl.v)*5-w/2),oy=Math.round(cl.y-h/2);
+  ctx.globalAlpha=cl.al;
+  for(let j=0;j<rows.length;j++){const row=rows[j];for(let i=0;i<row.length;i++){const ch=row[i];if(ch==='.'||!col[ch])continue;ctx.fillStyle=col[ch];ctx.fillRect(ox+i*px,oy+j*px,px,px);}}
+ }
+ ctx.globalAlpha=1;
+}
 
 /* ---------- icons ---------- */
 const ICONS=C.icons;
@@ -155,7 +180,7 @@ function calcStats(){
  s.rate=2*(1+0.1*u.rate)*Math.pow(1.1,d.quantum);
  s.shots=1+u.multi;
  s.maxHull=32*(1+0.3*u.hull)*Math.pow(1.04,u.hull)*Math.pow(1.25,d.nano);
- s.regen=s.maxHull*0.003*u.regen;
+ s.regen=s.maxHull*(0.004+0.003*u.regen);
  s.shieldMax=s.maxHull*0.08*u.shield;
  s.crit=Math.min(0.6,0.02*u.crit);
  s.credMult=(1+0.25*u.credit)*dmB*Math.pow(1.3,d.salv);
@@ -191,7 +216,7 @@ const dmGain=()=>S.maxWave>=20?Math.floor(1+Math.pow((S.maxWave-20)/4,1.4)):0;
 /* ---------- runtime ---------- */
 const G={s:null,enemies:[],pb:[],eb:[],parts:[],texts:[],stars:[],caps:[],banner:null,shake:0,flash:0,warpFx:0,
  p:{x:W/2,y:H-30,hull:20,shield:0,shieldDelay:0,flash:0},wT:{pri:0,sec:0},dead:false,respawnT:0,need:8,toSpawn:0,spawnT:0,isBoss:false,bossAlive:false,boss:null,bossT:35,escortT:3,
- droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,hiddenAt:0,debugMul:1,mega:false,megaHold:null,podHist:[]};
+ droneA:0,droneT:[],captured:0,marches:[],overT:0,buckets:[],bucketCur:0,bucketT:0,saveT:0,t:0,sector:-1,planet:null,planetX:130,planetY:20,clouds:null,hiddenAt:0,debugMul:1,mega:false,megaHold:null,podHist:[]};
 for(let i=0;i<70;i++){const l=i%3;G.stars.push({x:Math.random()*W,y:Math.random()*H,l,v:[5,13,30][l],c:['#2a3a7a','#7383bb','#ffffff'][l]});}
 function recalc(){G.s=calcStats();}
 
@@ -387,7 +412,7 @@ function startWave(){
  G.enemies=[];clearEB();G.marches=[];S.waveKills=0;
  G.mega=isMegaWave(S.wave);G.isBoss=G.mega||S.wave%5===0;G.boss=null;
  G.need=G.isBoss?1:needOf(S.wave);G.toSpawn=G.need;G.spawnT=G.mega?0.35:1;G.bossT=G.mega?90:35;G.bossAlive=false;G.escortT=4;
- const sec=sectorOf(S.wave);if(sec!==G.sector){G.sector=sec;G.planet=makePlanet(sec);}
+ const sec=sectorOf(S.wave);if(sec!==G.sector){G.sector=sec;G.planet=makePlanet(sec);G.clouds=buildClouds(sec);}
  G.minePass=!G.isBoss&&S.wave>=24&&S.wave%3===0;
  if(G.mega){banner('MEGA BOSS','#ff4d5e',2.2);SFX.alarm();toast(megaPhaseText(S.wave));}
  else if(G.isBoss){banner('WARNING: '+bossFor(S.wave).name,'#ff4d5e',2.2);SFX.alarm();}
@@ -647,6 +672,7 @@ function update(dt){
  const s=G.s,P=G.p;G.t+=dt;S.playTime+=dt;
  const warpMul=G.warpFx>0?1+G.warpFx*12:1;
  for(const st of G.stars){st.y+=st.v*dt*warpMul;if(st.y>=H){st.y-=H;st.x=Math.random()*W;}}
+ if(G.clouds){const m=H+40;for(const cl of G.clouds){cl.y+=cl.v*dt*warpMul;if(cl.y>=m)cl.y-=m;}}
  G.planetY+=dt*1.2;if(G.planetY>H+10){G.planetY=-70;G.planetX=rnd(20,W-20);}
  if(G.banner){G.banner.t-=dt;if(G.banner.t<=0)G.banner=null;}
  G.shake=Math.max(0,G.shake-dt*18);G.flash=Math.max(0,G.flash-dt*1.5);G.warpFx=Math.max(0,G.warpFx-dt*0.5);G.overT=Math.max(0,G.overT-dt);
@@ -777,6 +803,7 @@ function render(){
  ctx.fillStyle=BGCOL[G.sector%BGCOL.length]||BGCOL[0];ctx.fillRect(0,0,W,H);
  if(G.shake>0.3)ctx.translate(Math.round(rnd(-G.shake,G.shake)),Math.round(rnd(-G.shake,G.shake)));
  if(G.planet)ctx.drawImage(G.planet,Math.round(G.planetX-28),Math.round(G.planetY));
+ drawClouds();
  const streak=G.warpFx>0?Math.ceil(G.warpFx*14):0;
  for(const st of G.stars){ctx.fillStyle=st.c;ctx.fillRect(st.x|0,st.y|0,1,1+(st.l===2?1:0)+streak*(st.l+1)/3);}
  for(const e of G.enemies){drawEnemy(e);if(e.boss)drawBossExtras(e);}

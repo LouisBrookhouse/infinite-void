@@ -1,18 +1,18 @@
 # Status
 
-_Last updated: 2026-11-19 (v1.3.0 Option Pods on `daily/2026-11-19-option-pods`, v1.2.3 on main)_
+_Last updated: 2026-11-20 (v1.4.0 Verdant Belt on `daily/2026-11-20-verdant-clouds`, v1.3.0 on main at `0750b53`)_
 
 ## Version state
-- **Implemented:** 1.3.0 on `daily/2026-11-19-option-pods`. Option Pods (`pods`, max 1, ¢1,500) unlock at best wave 26. Two orbs trail the ship and `shootGun` copies each primary shot from both at 40% damage and the same velocity. They do not aim at a part and they do not add homing. A homing primary still copies homing. Secondary guns are not copied. The level resets on Warp Jump.
-- **Tested:** `npm test` on this branch. See [sessions/2026-11-19-option-pods.md](sessions/2026-11-19-option-pods.md).
-- **Merged:** 1.2.3 is on `main` (PR #11). 1.3.0 is not merged. This session does not open a PR.
-- **Live:** 1.2.3 until that merge and the deploy job finish.
+- **Implemented:** 1.4.0 on `daily/2026-11-20-verdant-clouds`. Verdant Belt draws six pixel clouds in that sector's greens. They scroll behind the stars, slower than the far star layer. The gate is the sector unlock on the current wave, so Outer Rim and Nebula Drift never show them. A Warp Jump back to wave 1 clears them. Sector 8 uses the Verdant picture again and the nebula returns.
+- **Tested:** `npm test` on this branch. See [sessions/2026-11-20-verdant-clouds.md](sessions/2026-11-20-verdant-clouds.md).
+- **Merged:** 1.3.0 is on `main` (PR #12, `0750b53`). 1.4.0 is not merged. This session does not open a PR.
+- **Live:** 1.3.0 until that merge and the deploy job finish.
 
 ## Live
-- **Version on main:** 1.2.3. This branch prepends 1.3.0 in `src/content/changelog.js`.
+- **Version on main:** 1.3.0. This branch prepends 1.4.0 in `src/content/changelog.js`.
 - **URL:** https://louisbrookhouse.github.io/infinite-void/ (deployed by `.github/workflows/ci.yml` on push to `main`).
 - **Live-verified 2026-11-17:** v1.0.0 returned HTTP 200 with zero console errors in headless Chrome, and gameplay rendered (CI run 44069366381: test and deploy green, deploy live-check passed). Later versions follow the same deploy job.
-- **Content on main:** 7 guns, 12 enemy types, 6 bosses, 11 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. This branch adds the Option Pods ship upgrade. It does not add a gun, enemy, or boss.
+- **Content on main:** 7 guns, 12 enemy types, 6 bosses, 12 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. This branch adds nebula colours on Verdant Belt. It does not add a gun, enemy, boss, or upgrade.
 
 ## Automation
 - CI (`test` job): docs/session-note/policy validator, unit tests, Playwright suites (smoke, save, migration, gating, balance guardrails, death, mega, mines, aim, latescale).
@@ -29,15 +29,15 @@ _Last updated: 2026-11-19 (v1.3.0 Option Pods on `daily/2026-11-19-option-pods`,
 - Engine is still one file (`src/game.js`, about 1020 lines). Split it only when a feature needs it, and never as a daily item.
 - The missions registry is reserved but unimplemented (roadmap R11).
 - Sector art still has five pictures, so sector 10 reuses THE DEEP. The HUD still says SECTOR 10.
-- The balance sim stalls around wave 44, so it never fights THE MAW or the health cap. Phase HP is set against `eHP(wave)` and a 90s clock. See DESIGN.md. Mine HP is 0.16× the wave baseline. A field is every 3rd non-boss wave from 24, with a second line from wave 36, a cap of 24, and a 13.5s life. The 30 minute sim has 0 deaths and a warp pays +13 Dark Matter. min5 is wave 21, min15 is wave 34, min30 is wave 44. Idle best is wave 8. Option Pods are bought around wave 30 in that run. Minutes 1-12 match 1.2.3.
+- The balance sim stalls around wave 44, so it never fights THE MAW or the health cap. Phase HP is set against `eHP(wave)` and a 90s clock. See DESIGN.md. Mine HP is 0.16× the wave baseline. A field is every 3rd non-boss wave from 24, with a second line from wave 36, a cap of 24, and a 13.5s life. The 30 minute sim has 0 deaths and a warp pays +13 Dark Matter. On 2026-11-20, before the regen tweak (and with the clouds, which do not move the sim): min5 wave 21 / onScreen 11.133 / TTK 1.197s, min15 wave 34 / 17.9 / 1.462s, min30 wave 44 / 14.533 / 2.939s, idle best 8, post-warp best 60. After a passive heal of 0.4% max hull per second: the same active line, idle best 10. Option Pods are bought around wave 30. The v1.0.0 idle baseline was also wave 10.
 - The game has no final boss and no end state. Boss tiers are `standard`, `elite`, `mega`, and `meta`, and the list stays open. Waves continue past 95 and sectors continue past 10. Future days can add bosses of any tier, including more mega bosses and meta threats.
-- **Meta threats are not implemented.** The play rect, the outside layer, and the spawn roll are a design contract in DESIGN.md. R04 Black Hole and R35 Rect Breaker are the first two roadmap items. They are wild-card days (about one in ten, never two in a row), not the next normal update. A normal day skips a `[meta threat]` item. 1.3.0 is not a meta threat.
-- **`tests/run.js` pins `VERSION`.** 1.2.3 asserted `1.2.3`. 1.3.0 changes that one string to `1.3.0` so a changelog bump can pass `latescale`. No guardrail band and no behavior assertion changed. A pull request labelled `daily-update` fails the protected-path check because `tests/run.js` is protected. Merge this branch by hand, without that label.
+- **Meta threats are not implemented.** The play rect, the outside layer, and the spawn roll are a design contract in DESIGN.md. R04 Black Hole and R35 Rect Breaker are the first two roadmap items. They are wild-card days (about one in ten, never two in a row), not the next normal update. A normal day skips a `[meta threat]` item. 1.4.0 is not a meta threat. The previous shipped update (1.3.0) was not one either.
+- **`tests/run.js` latescale checks `VERSION >= 1.2.3`.** Read on 2026-11-20. A changelog bump does not need a test edit. This branch does not touch `tests/`.
 - A hull breach on any wave, including a mega boss, is an emergency Warp Jump. It pays the same Dark Matter as the button (`dmGain()`, which is 0 before wave 20) and never the Maw bounty. A zero payout does not increment `S.warps`. The Maw phase timer still restarts the current phase. A boss that escapes outside a mega boss still drops one wave.
 - Clearing THE MAW grants Eidolon once and a Dark Matter plus credit bounty once per run (`S.megaPaid`), then the run continues. It does not warp.
 - `?mega=1` is a dev jump to wave 91. `?final=1` is the same jump. Either sets `noSave`. `?kit=1` with either also sets `G.debugMul`. Real runs leave `debugMul` at 1.
 
 ## Next actions
-1. Daily agent: roadmap **R03** sector art, Verdant Belt. R04 Black Hole is a meta threat and is not next.
-2. Owner: merge `daily/2026-11-19-option-pods` by hand, without the `daily-update` label, because `tests/run.js` changed.
-3. Owner (optional): decide on branch protection (see above). The `latescale` version pin will need the same one-line bump on every later version.
+1. Daily agent: roadmap **R0X** Splitter (wave 27). R04 Black Hole is a meta threat and is not next.
+2. Owner: open the PR for `daily/2026-11-20-verdant-clouds`. This branch does not change a protected path.
+3. Owner (optional): decide on branch protection (see above).
