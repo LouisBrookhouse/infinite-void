@@ -678,18 +678,18 @@ async latescale(){
  for(const b of r.bosses){assert.strictEqual(b.kill,true,b.id+' w'+b.wave);assert.ok(b.dt<35,b.id+' w'+b.wave+' '+b.dt+'s');}
  const liveCore=r.bosses.find(b=>b.id==='core'&&b.wave===120);
  const liveBio=r.bosses.find(b=>b.id==='bio'&&b.wave===125);
- assert.ok(liveCore&&liveCore.dt<35);assert.ok(liveBio&&liveBio.dt<35);
+ assert.ok(liveCore&&liveCore.dt<30);assert.ok(liveBio&&liveBio.dt<30);
  for(const row of r.rows){
   assert.strictEqual(row.kill,true,row.bid+' w'+row.wave+' hp '+row.hp);
-  assert.ok(row.t<35,row.bid+' w'+row.wave+' '+row.t+'s vs 35s escape');
+  assert.ok(row.t<30,row.bid+' w'+row.wave+' '+row.t+'s vs 30s margin');
   assert.strictEqual(row.deaths,0);
  }
  const core125=r.rows.find(x=>x.bid==='core'&&x.wave===125);
  const bio125=r.rows.find(x=>x.bid==='bio'&&x.wave===125);
- assert.ok(liveCore&&liveCore.kill&&liveCore.dt<35,'idle Big Core wave 120 dies before the 35s escape ('+(liveCore&&liveCore.dt)+'s)');
- assert.ok(liveBio&&liveBio.kill&&liveBio.dt<35,'idle Xeno Biomech wave 125 dies before the 35s escape ('+(liveBio&&liveBio.dt)+'s)');
- assert.ok(core125&&core125.kill&&core125.t<35,'isolated Big Core wave 125 dies before the 35s escape ('+(core125&&core125.t)+'s)');
- assert.ok(bio125&&bio125.kill&&bio125.t<35,'isolated Xeno Biomech wave 125 dies before the 35s escape ('+(bio125&&bio125.t)+'s)');
+ assert.ok(liveCore&&liveCore.kill&&liveCore.dt<30,'idle Big Core wave 120 dies with a 5s margin ('+(liveCore&&liveCore.dt)+'s)');
+ assert.ok(liveBio&&liveBio.kill&&liveBio.dt<30,'idle Xeno Biomech wave 125 dies with a 5s margin ('+(liveBio&&liveBio.dt)+'s)');
+ assert.ok(core125&&core125.kill&&core125.t<30,'isolated Big Core wave 125 dies with a 5s margin ('+(core125&&core125.t)+'s)');
+ assert.ok(bio125&&bio125.kill&&bio125.t<30,'isolated Xeno Biomech wave 125 dies with a 5s margin ('+(bio125&&bio125.t)+'s)');
  log('  latescale: wave '+r.end.wave+' in '+r.end.t+'s, 0 new deaths | live core120 '+liveCore.dt+'s bio125 '+liveBio.dt+'s | isolated core125 '+core125.t+'s bio125 '+bio125.t+'s (escape 35s) | eHP125 '+Math.round(m.hp125)+' eDmg130/125 '+(m.d130/m.d125).toFixed(3));
  await page.evaluate(id=>{
   const I=__IV;I.S.wave=125;I.S.auto=false;I.recalc();

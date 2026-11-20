@@ -242,7 +242,7 @@ Shot, ram, and mine-touch damage still use `eDmg`. Through wave 125 that is `1.1
 
 Big Core and Xeno Biomech keep the shield and plate behaviour from before 1.2.3 (`3cde506`, the parent of PR #11). Big Core's three walls are stacked on `ox = 0`, each 14×4 and 10% of the boss's max health, and they do not grow back. A hit on the guarded core is spent on the lowest live wall. Xeno's five plates are invulnerable 6×6 blocks with no `maxHp`. They sway across the body (`ox = sin(t) * (3 + i * 2.6)`) and a shot that meets one tinked off. There is no aim special-case for either boss. The ship aims at the body.
 
-The health cap is the balance tool. Wall and plate layout stay classic. Their health numbers stay the classic fractions. On Louis's save, idle play still kills both before the 35s escape: Big Core at wave 120 in 10s, Xeno Biomech at wave 125 in 34.8s. Isolated at wave 125 those times are 10.67s and 17.33s.
+The health cap is the balance tool. Wall and plate layout stay classic. Big Core's wall fraction stays 10% of its max health. Xeno's `hp` multiplier is 8.5, down from 10, so the same invulnerable plates sit on a smaller pool. On Louis's save, idle play kills Big Core at wave 120 in 10.23s and Xeno Biomech at wave 125 in 20.8s. At multiplier 10 that Xeno fight was 34.8s, inside the 35s escape by a fifth of a second. The latescale outcome checks require both under 30s, five seconds inside the escape. Isolated at wave 125 those times are 10.13s and 20.03s. A seeded active run that reaches wave 25 kills Xeno in 3.75s, down from 4.25s at multiplier 10.
 
 ### Guardrails (CI enforced, `tests/guardrails.json`)
 A deterministic seeded sim (greedy buyer, 8 taps/s) must satisfy:
