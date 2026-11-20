@@ -1,7 +1,7 @@
 # Design
 
 ## Pillars
-1. **Chunky retro pixels.** A 180x240 canvas scaled with nearest-neighbour. Sprites are hand-authored pixel rows (left half, auto-mirrored) in a small sci-fi palette. No smoothing, no image assets beyond tiny ones.
+1. **Chunky retro pixels.** A 180x240 canvas scaled with nearest-neighbour. Sprites are hand-authored pixel rows (left half, auto-mirrored) in a small sci-fi palette. No smoothing, no image assets beyond tiny ones. New sprites follow the Art style guide.
 2. **The screen is never empty.** Swarms stay dense and enemies take real hits to kill. Upgrades should *keep pace with* the curve, never trivialise it.
 3. **Idle-friendly, tap-rewarding.** The ship auto-fires and plays itself, and tapping (especially weak points) is meaningfully stronger.
 4. **Prestige is the release valve.** Progress stalls in a run, and Warp Jump (from wave 20) converts it into permanent Dark Matter power.
@@ -49,7 +49,7 @@ Sprites use fixed palette letters, not sector X/Y. The layer is a 25×11 barge w
 One model for every fight. The ship moves horizontally toward the aim x. Primary guns fire their normal patterns from the ship. They are not turned toward a part.
 
 1. An enemy overlapping the hull (within about 10 by 12px) is the target. That is the only time something on top of the ship wins.
-2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. On Big Core and Xeno Biomech the aim x is a gap that still crosses the weak point. If a plate covers that column, the ship sits on the front plate until it breaks. Primary guns still fire straight.
+2. A boss on screen wins, at any tier, over minions and over a mine field. The aim point is the body, or the current damageable part: a live tentacle segment (lower health, then nearer), then a living eye, then the mouth. Big Core and Xeno Biomech use that same body aim. Primary guns still fire straight.
 3. With no boss, an enemy below y = H-75 wins, then a mine field of 6 or more (the mine nearest the ship), then the lowest other enemy.
 
 Homing missiles curve toward the nearest target on their own. Drones pick a live enemy and fire toward its aim point. Neither has a boss-only rule or a Maw-only rule.
@@ -65,6 +65,7 @@ The gate is the sector unlock, checked against the current wave, and only this p
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
 
+- **art.js**: `IV.art`. Master palette, 4×4 Bayer, ramps, and the small blit helpers (`plate`, `pod`, `spore`, `disc`). Loaded immediately after `core.js`. The nebula and the planets call `IV.art.bayer`. See the Art style guide.
 - **changelog.js**: newest first, `{version, date, title, added[], balance[], fixed[]?, gate?}`. The top entry is the game version (the only place it lives).
 - **sectors.js**: `{id, name, unlock:{sector:n}, scheme:{X,Y}, bg, planet:[3], bias:{enemyId:mult}, clouds?:{a,b,h}}`. Position must equal its sector number. The list cycles after the last entry. `clouds` is an optional dark/mid/highlight palette. The engine dithers a nebula from it while that picture is active. See Verdant Belt clouds.
 - **skins.js**: `{id, name, unlock, half:[rows]}`. `S.skin` is the equipped id. `S.skins[id] = 1` means owned. SAVE/STATS lists a skin when it is the starter, owned, or its gate is open, and only an owned skin can be equipped. A boss award sets the owned flag once; the registry `unlock` is what keeps it off a fresh save.
@@ -173,6 +174,58 @@ The payout is `dmGain()` at that moment, the same number the Warp Jump button wo
 
 Base hull is 32, up from 20 (`calcStats`). A full reset on every death was ending the balance sim on the first boss. The extra hull lets that run clear the early bosses without a wipe. Enemy health and damage are unchanged. Hull regen is `maxHull * (0.004 + 0.003 * Nano Repair level)`. The 0.004 is always on, so a ship heals a little before that upgrade is bought. 1.4.0 added it. An idle run reaches wave 10 again. The active 30 minute stall stays at wave 44.
 
+## Art style guide
+
+Every future daily update's art follows this section. Before shipping a sprite, screenshot it next to the v1.0 scout, fighter, cruiser, and the player ship, and reject it if it looks like a different hand. AGENTS.md is owner-protected and is not edited from a daily branch. This section is the rule those updates follow. INDEX and OPERATIONS point here.
+
+### Grid
+The playfield is 180×240, one pixel, `imageSmoothingEnabled` false. No image files for sprites. Enemies draw 1:1, and `e.w` / `e.h` are the sprite size, so a longer row changes the hitbox. Keep the size when redrawing. Standard bosses draw at 2×, so the hitbox is the sprite times two. The player ship is 11×12. A standard enemy is about 9–13 wide and 6–12 tall. The escort drone and an Option Pod are 5×5. Boss bodies are larger and use the same grammar.
+
+### Outline
+There is no separate black stroke. The darkest ramp pixel is the rim (`d` `#3b4252`, `n` `#1b2b5a`, or `k` `#0b0f1e`). One white speck, or the lightest ramp color, sits on the top of a mirrored sprite and on the upper-left of an unmirrored one.
+
+### Palette
+`IV.art.PAL` in `src/content/art.js` is the master list. The engine uses the same object.
+
+| Letter | Hex | Role |
+|---|---|---|
+| `c` | `#7fe7ff` | cyan, cockpit, shield bar |
+| `w` | `#ffffff` | white speck |
+| `b` | `#2a6fdb` | blue |
+| `n` | `#1b2b5a` | navy rim |
+| `g` | `#8a94a6` | gray hull |
+| `d` | `#3b4252` | dark metal |
+| `r` | `#ff4d5e` | red |
+| `o` | `#ff9f1c` | orange |
+| `y` | `#ffe066` | yellow |
+| `p` | `#b14aed` | purple |
+| `m` | `#ff5ccf` | magenta |
+| `l` | `#6bff8a` | leaf highlight |
+| `e` | `#2e8b57` | leaf body |
+| `k` | `#0b0f1e` | near-black |
+| `v` | `#5a2a7a` | bruise |
+| `f` | `#c9b79c` | bone |
+| `h` | `#6b5a4a` | brown |
+
+A sprite uses 3 to 6 of these. `X` is the sector hull and `Y` is the sector engine. A fixed-palette enemy, including the Mine Layer and the mine, must not use `X` or `Y`. The mines suite checks that.
+
+### Light
+A mirrored sprite cannot shade left against right. The top rows are the highlight and the bottom rows are the shadow, with the dark rim on the outside. Large unmirrored fields (planets, the Verdant nebula, THE MAW's wall) use the 4×4 Bayer matrix `IV.art.BAYER` and the light `(-0.6, -0.6)`, the same vector as `makePlanet`. The darkest ramp color stays a hard rim so the silhouette reads. `IV.art.bayer` is the function the nebula calls. Do not change its output. Character-scale parts, shields, plates, and tentacles use discrete bands from `IV.art.RAMP`, not dither. Dither on a 9px scout, or on a stack of overlapping discs, looks like another artist.
+
+Ramps, dark to light, all master-palette hexes: `metal`, `hot`, `flesh`, `bruise`, `blood`, `heat`, `venom`, `leaf`, `bone`.
+
+### Frames
+An animation is two full frames (`full` and `full2` on the invader), not a tween. The hit flash is the white mask. A kamikaze alternates that mask. A cloaker changes alpha. There are no in-betweens.
+
+### Half rows
+`mirror()` pads each row to the longest and appends the reverse of every character except the last. That last character is the center column. Author it as body color so the seam does not stripe.
+
+### Leave these alone
+Do not copy these into a new sprite: the rock's mid tone `#9c8670`, the v1.0 missile speck `#cfd6e6`, planet colors that are not in the master list (The Deep uses `#ffb0b8` and `#2a0b14`), and the UI bar `#3b0b14`. New sprites use `PAL` only.
+
+### Bosses and meta threats
+A boss may be bigger. It still uses this rim, these ramps, and this light. THE MAW's wall is a Bayer field in a 4-tone flesh ramp (`#0b0f1e`, `#1b2b5a`, `#5a2a7a`, `#6b5a4a`), lit from the upper left like the planets, with the brightest tone only as a sparse highlight. Tentacles use that same ramp and stay darker than the wall: the body is the second tone, and the last tone sits only on the lit edge. Eyes and the mouth are the bright points (bone teeth, a red iris). No yellow on the creature. A mine keeps its 15×13 hitbox and draws a small dark metal orb inside it, navy outline, a gray top speck, and the blinking red core from its `draw`. A meta threat stays outside this pixel style. See Meta threats.
+
 ## Balance philosophy
 - Through wave 100, enemy HP grows ~19%/wave (x1.2 per sector, plus an early polynomial ramp). After wave 100, health follows the late cap below and does not go back to 19% a wave. Rewards grow ~16%/wave. Costs grow faster than rewards, so each run naturally stalls.
 - Kills per wave and max alive enemies rise with the wave (`needOf`, `maxAliveOf`, capped at 150 and 110).
@@ -187,7 +240,9 @@ Health uses the classic curve through wave 100 (`HP_BEND_WAVE`), including THE M
 
 Shot, ram, and mine-touch damage still use `eDmg`. Through wave 125 that is `1.11^(wave-1)`, same as before. After wave 125, damage grows by `DMG_LATE` (**1.12**) per wave, and by `HPK.sec` (**1.2**) for each sector past `sectorOf(125)`. That is the old per-sector health step, with a per-wave rate between the old 11% hit growth and the old 19% health growth. A full 19% per wave deleted the reference save on the next Big Core. Wave 140 damage is `1.12^15 × 1.2` (about 6.6×) wave-125 damage, at the same health.
 
-Big Core's three shields are offset, with a gap over the weak point, 8% of boss health each, and they return 11s after they break. Xeno Biomech's center plate has 3.2×`eHP`, covers the weak point, and returns 14s after it cracks. Side plates stay off that column. Auto-aim uses the gap, or the plate that blocks it.
+Big Core and Xeno Biomech keep the shield and plate behaviour from before 1.2.3 (`3cde506`, the parent of PR #11). Big Core's three walls are stacked on `ox = 0`, each 14×4 and 10% of the boss's max health, and they do not grow back. A hit on the guarded core is spent on the lowest live wall. Xeno's five plates are invulnerable 6×6 blocks with no `maxHp`. They sway across the body (`ox = sin(t) * (3 + i * 2.6)`) and a shot that meets one tinked off. There is no aim special-case for either boss. The ship aims at the body.
+
+The health cap is the balance tool. Wall and plate layout stay classic. Big Core's wall fraction stays 10% of its max health. Xeno's `hp` multiplier is 8.5, down from 10, so the same invulnerable plates sit on a smaller pool. On Louis's save, idle play kills Big Core at wave 120 in 10.23s and Xeno Biomech at wave 125 in 20.8s. At multiplier 10 that Xeno fight was 34.8s, inside the 35s escape by a fifth of a second. The latescale outcome checks require both under 30s, five seconds inside the escape. Isolated at wave 125 those times are 10.13s and 20.03s. A seeded active run that reaches wave 25 kills Xeno in 3.75s, down from 4.25s at multiplier 10.
 
 ### Guardrails (CI enforced, `tests/guardrails.json`)
 A deterministic seeded sim (greedy buyer, 8 taps/s) must satisfy:

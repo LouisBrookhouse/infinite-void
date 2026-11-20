@@ -30,5 +30,8 @@
 - Malformed or future timestamps, symlinks, non-matching names, `README.md` and `TEMPLATE.md` are never deleted. Expiry happens up to ~24 hours after a note turns 7 days old (daily cron). Deletion removes the note from the tree, not from git history.
 - Dry run: `node scripts/expire-sessions.js` (add `--now 2026-12-01T00:00:00Z` to simulate a date).
 
+## Art on a daily update
+Every sprite, boss part, mine, drone, pod, and projectile added or redrawn in a daily update follows the Art style guide in [DESIGN.md](DESIGN.md). Screenshot it next to the v1.0 scout, fighter, cruiser, and the player ship, and do not ship it if it looks like a different hand. AGENTS.md stays owner-edited. This section is the pointer daily updates use.
+
 ## Local commands
 See the table in [../AGENTS.md](../AGENTS.md).

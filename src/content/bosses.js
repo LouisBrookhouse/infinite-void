@@ -45,38 +45,36 @@ IV.content.bosses.push(
    if(p2&&e.a2<=0){e.a2=2.4;const a=A.aimAt(e.x,e.y);A.bossFire(e,a,90,'bolt',1,-8);A.bossFire(e,a,90,'bolt',1,8);if(G.marches.length<1)A.spawnInvaderGroup(8,false);}}},
  {id:'core',name:'BIG CORE',tier:'standard',unlock:{wave:20},hp:12,body:0.15,escorts:true,
   half:["............gg","........gggggd","....gggggddddd","..ggddddddgggb","gggddddddgbbbc","gdddddddgbbccw","gggddddddgbbbc","..ggddddddgggb","....gggggddddd","........gggggd","............gg"],
-  setup(e,A){const hh=e.h/2,hp=e.maxHp*0.08;e.ty=36;
-   const cols=[-20,0,20],ys=[hh+6,hh+13,hh+20];
-   for(let i=0;i<3;i++)e.parts.push({kind:'wall',ox:cols[i],oy:ys[i],w:8,h:4,hp,maxHp:hp,flash:0,down:0});
-   e.parts.push({kind:'weak',ox:0,oy:3,w:16,h:hh*2-6,mult:1.5,guard:true,core:true});},
+  setup(e,A){const hh=e.h/2,hp=e.maxHp;e.ty=36;
+   for(const k of [4,10,16])e.parts.push({kind:'wall',ox:0,oy:hh+k,w:14,h:4,hp:hp*0.1,maxHp:hp*0.1,flash:0});
+   e.parts.push({kind:'weak',ox:0,oy:3,w:10,h:hh*2-6,mult:1.5,guard:true,core:true});},
   update(e,dt,A){const G=A.G,p2=e.phase===2;
    e.tx=A.W/2+Math.sin(G.t*0.45)*38;e.ty=36+Math.sin(G.t*0.9)*5;
    const open=!A.wallsAlive(e);if(open&&e.phase===1){e.phase=2;A.banner('CORE EXPOSED','#7fe7ff',1.5);A.SFX.alarm();}
    if(e.a1<=0){e.a1=p2?1.0:1.7;for(const ox of [-22,-12,12,22])A.bossFire(e,Math.PI/2,120,'laser',1,ox,e.h/2);}
    if(p2&&e.a2<=0){e.a2=1.4;for(const ox of [-22,22])A.bossFire(e,A.aimAt(e.x+ox,e.y),110,'laser',1,ox,e.h/2);}}},
- {id:'bio',name:'XENO BIOMECH',tier:'standard',unlock:{wave:25},hp:10,body:0.6,escorts:true,
+ {id:'bio',name:'XENO BIOMECH',tier:'standard',unlock:{wave:25},hp:8.5,body:0.6,escorts:true,
   half:["..p.........",".ppp......vv","pp.pp...vvpp","p...ppvvppee","....pppppeel","...ppeppeell","..ppeepppell","..peep.ppeyy","..pep..ppyoy","...p...pppyy",".......ppppe","........pp.p"],
-  setup(e,A){const hh=e.h/2;e.ty=36;e.tail=[];
-   const plate=A.eHP(A.S.wave)*3.2,side=A.eHP(A.S.wave)*0.9;
-   const rest=[-24,-14,0,14,24],wide=[6,6,14,6,6];
-   for(let i=0;i<5;i++){const hp=i===2?plate:side;const p={kind:'block',ox:rest[i],oy:0,w:wide[i],h:6,seg:i,hp,maxHp:hp,down:0,flash:0};e.tail.push(p);e.parts.push(p);}
+  setup(e,A){const hh=e.h/2;e.ty=36;e.tail=[];for(let i=0;i<5;i++){const p={kind:'block',ox:0,oy:0,w:6,h:6,seg:i};e.tail.push(p);e.parts.push(p);}
    e.parts.push({kind:'weak',ox:0,oy:hh-6,w:10,h:12,mult:2.5,eye:{oy:2,c:'#ffe066'}});},
   update(e,dt,A){const G=A.G,p2=e.phase===2;
    e.tx=A.W/2+Math.sin(G.t*0.5)*28;e.ty=36+Math.sin(G.t*0.8)*4;
-   const spd=p2?2.2:1.5,hh=e.h/2,rest=[-24,-14,0,14,24];
-   for(const p of e.tail){const i=p.seg;p.oy=hh+2+i*5;p.ox=i===2?0:rest[i]+Math.sin(G.t*spd+i*0.8)*3;}
+   const spd=p2?2.6:1.6,hh=e.h/2;
+   for(const p of e.tail){const i=p.seg;p.oy=hh+2+i*5;p.ox=Math.sin(G.t*spd+i*0.5)*(3+i*2.6);}
    if(e.a1<=0){e.a1=p2?1.1:1.5;A.bossFire(e,A.aimAt(e.x,e.y),48,'big',2,0,hh-4);}
    if(p2&&e.a2<=0){e.a2=2.2;const o=Math.random()*A.TAU;for(let i=0;i<12;i++)A.bossFire(e,o+i*A.TAU/12,46,'orb',0.8,0,0);}}}
 );
 /* THE MAW: a wall of flesh across the top of sector 10, waves 91-95. Four Hungry tethers.
  * HP budget matches 1.1.1: P1 22, P2 24 at 0.75 taken, P3 23 on two eyes, P4 25.6, P5 17.6 then core 16. */
 (function(){
- const SKIN=[
-  {meat:'#6a1830',rib:'#4a1022',deep:'#1a060c',vein:'#3a0820',sinew:'#c46878',flesh:'#8a2848',edge:'#14060c',hi:'#f0b0b8',tooth:'#f2e2c4',mouth:'#120208',gum:'#5a1428',spot:'#3a101c',lit:'#a05060',sock:'#4a1424'},
-  {meat:'#5a2048',rib:'#3a1438',deep:'#140810',vein:'#2a1028',sinew:'#c090b0',flesh:'#7a3860',edge:'#10060c',hi:'#e8d0dc',tooth:'#f2e2c4',mouth:'#120208',gum:'#4a1838',spot:'#2a1020',lit:'#b088a0',sock:'#3a1830'},
-  {meat:'#7a2038',rib:'#541428',deep:'#1a060e',vein:'#a01830',sinew:'#e09098',flesh:'#9a3050',edge:'#14060c',hi:'#ffc0c4',tooth:'#f2e2c4',mouth:'#1a0408',gum:'#6a1830',spot:'#401018',lit:'#c06070',sock:'#5a1828'},
-  {meat:'#8a1828',rib:'#5a1018',deep:'#1a0408',vein:'#c01020',sinew:'#ff8088',flesh:'#a82838',edge:'#140408',hi:'#ffd0d0',tooth:'#fff0d0',mouth:'#200408',gum:'#6a1020',spot:'#401014',lit:'#e06068',sock:'#6a1420'},
-  {meat:'#4a1428',rib:'#30101c',deep:'#10040a',vein:'#6a1030',sinew:'#d08070',flesh:'#6a2038',edge:'#0c0408',hi:'#ffb090',tooth:'#f2e2c4',mouth:'#280808',gum:'#4a1020',spot:'#281018',lit:'#c07058',sock:'#3a101c'}];
+ const MEAT=['#0b0f1e','#1b2b5a','#5a2a7a','#6b5a4a'];
+ const HURT=['#0b0f1e','#1b2b5a','#5a2a7a','#ff4d5e'];
+ const PHASE=[
+  {ramp:MEAT,hurt:HURT,flesh:'#5a2a7a',hi:'#b14aed',deep:'#0b0f1e',edge:'#0b0f1e',tooth:'#c9b79c',mouth:'#0b0f1e',gum:'#5a2a7a'},
+  {ramp:['#0b0f1e','#1b2b5a','#5a2a7a','#5a2a7a'],hurt:HURT,flesh:'#5a2a7a',hi:'#b14aed',deep:'#0b0f1e',edge:'#0b0f1e',tooth:'#c9b79c',mouth:'#0b0f1e',gum:'#5a2a7a'},
+  {ramp:MEAT,hurt:HURT,flesh:'#5a2a7a',hi:'#ff4d5e',deep:'#0b0f1e',edge:'#0b0f1e',tooth:'#c9b79c',mouth:'#0b0f1e',gum:'#5a2a7a'},
+  {ramp:['#0b0f1e','#1b2b5a','#5a2a7a','#5a2a7a'],hurt:HURT,flesh:'#5a2a7a',hi:'#ff4d5e',deep:'#0b0f1e',edge:'#0b0f1e',tooth:'#c9b79c',mouth:'#0b0f1e',gum:'#5a2a7a'},
+  {ramp:MEAT,hurt:HURT,flesh:'#5a2a7a',hi:'#ff4d5e',deep:'#0b0f1e',edge:'#0b0f1e',tooth:'#c9b79c',mouth:'#1b2b5a',gum:'#5a2a7a'}];
  const LIM=1.15,ROOT=9,TIPR=3.2;
  const HUNG=[
   {z:0,len:11,pts:[[-72,20],[-84,46],[-70,76],[-78,104]]},
@@ -239,12 +237,6 @@ IV.content.bosses.push(
    if((f===2||f===4)&&minions(A)<(f===4?6:4))A.mkEnemy(f===4?'fighter':'scout',{counts:false,rew:0.15,hpMul:0.4,x:A.clamp(e.x+A.rnd(-20,20),14,A.W-14),y:Math.max(8,e.y+16)});
   }
  }
- function disc(ctx,x,y,r,col){
-  const ix=x|0,iy=y|0;ctx.fillStyle=col;
-  if(r<=0.6){ctx.fillRect(ix,iy,1,1);return;}
-  const R=Math.ceil(r),r2=r*r;
-  for(let j=-R;j<=R;j++){const s=Math.sqrt(Math.max(0,r2-j*j))|0;ctx.fillRect(ix-s,iy+j,(s<<1)+1,1);}
- }
  function samples(pts,radii){
   const out=[];
   for(let i=1;i<pts.length;i++){const a=pts[i-1],b=pts[i],dx=b.x-a.x,dy=b.y-a.y,d=Math.hypot(dx,dy)||1,steps=Math.max(1,Math.ceil(d/2));
@@ -255,70 +247,90 @@ IV.content.bosses.push(
  function tube(ctx,pts,radii,skin,opt){
   const dots=samples(pts,radii),ga=ctx.globalAlpha,al=opt.alpha==null?1:opt.alpha;
   if(al<=0||dots.length<2)return;ctx.globalAlpha=ga*al;
-  for(const p of dots)disc(ctx,p.x,p.y,p.r+1,skin.edge);
-  for(const p of dots){const hot=opt.flash>0&&(p.i===opt.flashSi||p.i-1===opt.flashSi);
-   disc(ctx,p.x,p.y,Math.max(1,p.r-0.15),hot?skin.hi:(opt.flash>0?skin.lit:(opt.ratio<0.5?skin.spot:skin.flesh)));}
-  ctx.fillStyle=skin.sinew;
-  for(const p of dots){if(p.r<2)continue;ctx.fillRect((p.x-p.nx*p.r*0.35)|0,(p.y-p.ny*p.r*0.35)|0,1,1);
-   if(p.r>3.4&&p.i%4===0){ctx.fillStyle=skin.spot;ctx.fillRect((p.x+p.nx*p.r*0.35-1)|0,(p.y+p.ny*p.r*0.35)|0,2,2);ctx.fillStyle=skin.sinew;}
-   if(opt.ratio<0.66&&p.i%4===0){ctx.fillStyle=skin.deep;for(let k=-p.r+1;k<=p.r-1;k+=2)ctx.fillRect((p.x+p.nx*k)|0,(p.y+p.ny*k)|0,1,1);ctx.fillStyle=skin.sinew;}}
+  let x0=1e9,y0=1e9,x1=-1e9,y1=-1e9;
+  for(const p of dots){const r=p.r+1;if(p.x-r<x0)x0=p.x-r;if(p.y-r<y0)y0=p.y-r;if(p.x+r>x1)x1=p.x+r;if(p.y+r>y1)y1=p.y+r;}
+  x0=x0|0;y0=y0|0;x1=Math.ceil(x1);y1=Math.ceil(y1);
+  const ramp=opt.ratio<0.5?skin.hurt:skin.ramp,n=ramp.length;
+  for(let y=y0;y<=y1;y++)for(let x=x0;x<=x1;x++){
+   let best=1e9,bp=null;
+   for(const p of dots){const dx=x+0.5-p.x,dy=y+0.5-p.y,d=dx*dx+dy*dy;if(d<best){best=d;bp=p;}}
+   const dist=Math.sqrt(best);if(dist>bp.r)continue;
+   const hot=opt.flash>0&&(bp.i===opt.flashSi||bp.i-1===opt.flashSi);
+   if(hot){ctx.fillStyle='#ffffff';ctx.fillRect(x,y,1,1);continue;}
+   if(dist>bp.r-1){ctx.fillStyle=ramp[0];ctx.fillRect(x,y,1,1);continue;}
+   const inv=dist>0.4?1/dist:0,light=IV.art.litUL((x+0.5-bp.x)*inv,(y+0.5-bp.y)*inv);
+   const edge=dist>bp.r-2.15;
+   let k=1;
+   if(edge&&light>0.66)k=n-1;
+   else if(light>0.84)k=Math.min(2,n-2);
+   if(k<0)k=0;if(k>n-1)k=n-1;
+   ctx.fillStyle=ramp[k];ctx.fillRect(x,y,1,1);
+  }
   ctx.globalAlpha=ga;
  }
  function drawHungry(ctx,pts,skin,t,arm){
   const b=pts[pts.length-1],a=pts[Math.max(0,pts.length-2)],ang=Math.atan2(b.y-a.y,b.x-a.x);
   const c=Math.cos(ang),s=Math.sin(ang),px=-s,py=c;
-  disc(ctx,b.x,b.y,7.2,skin.edge);
-  disc(ctx,b.x,b.y,5.6,arm<1?skin.rib:skin.flesh);
-  const g=1.4+ (0.5+0.5*Math.max(0,Math.sin(t*8+b.x)))*3.4;
+  IV.art.disc(ctx,b.x,b.y,7.2,arm<1?skin.hurt:skin.ramp);
+  const g=2+((t*8+b.x)|0)%2;
   ctx.fillStyle=skin.mouth;
-  for(let k=-3;k<=3;k++)ctx.fillRect((b.x+c*k)|0,(b.y+s*k)|0,2,2);
+  for(let k=-2;k<=2;k++)ctx.fillRect((b.x+c*k)|0,(b.y+s*k)|0,2,2);
   ctx.fillStyle=skin.tooth;
   for(const side of [-1,1])for(let k=-2;k<=2;k+=2)ctx.fillRect((b.x+c*k+px*side*g)|0,(b.y+s*k+py*side*g)|0,2,2);
  }
  function radiiFor(n){const r=[];for(let i=0;i<=n;i++)r.push(thick(Math.min(Math.max(0,n-1),i),Math.max(2,n)));return r;}
  function worldJoints(e,joints){const o=[];for(const p of joints)o.push({x:e.x+p.x,y:e.y+p.y});return o;}
+ function fillOval(ctx,x,y,rx,ry,col){
+  ctx.fillStyle=col;const ry2=ry*ry||1;
+  for(let j=-ry;j<=ry;j++){const t=1-(j*j)/ry2;if(t<0)continue;const s=Math.round(rx*Math.sqrt(t));ctx.fillRect((x-s)|0,(y+j)|0,s*2+1,1);}
+ }
  function drawWall(ctx,e,skin,t){
-  const W=180,top=Math.max(0,(e.y-32)|0),bot=(e.y+20)|0;
-  for(let y=top;y<=bot;y++){
-   const rib=((y+(t*7|0))%7)<3;
-   ctx.fillStyle=rib?skin.rib:skin.meat;ctx.fillRect(0,y,W,1);
-   ctx.fillStyle=skin.vein;
-   ctx.fillRect((16+Math.sin(y*0.33+t)*7)|0,y,2,1);
-   ctx.fillRect((148+Math.sin(y*0.27-t*1.2)*6)|0,y,2,1);
-   if((y*13)%19<2){ctx.fillStyle=skin.deep;ctx.fillRect((y*9)%W,y,2,1);}
-   if(rib&&(y%2===0)){ctx.fillStyle=skin.sinew;ctx.fillRect(28+(y*5)%46,y,4,1);ctx.fillRect(108+(y*3)%36,y,3,1);}
+  const W=180,top=Math.max(0,(e.y-32)|0),bot=(e.y+20)|0,h=bot-top+1;
+  if(h<4)return;
+  const ramp=skin.ramp,rgb=ramp.map(IV.art.rgb);
+  const c=e._wc||(e._wc=document.createElement('canvas'));
+  if(c.width!==W||c.height!==h){c.width=W;c.height=h;}
+  const g=c.getContext('2d'),img=g.createImageData(W,h),pix=img.data;
+  for(let j=0;j<h;j++){const u=j/(h-1);
+   for(let i=0;i<W;i++){
+    let light=0.16+(1-i/W)*0.34+(1-u)*0.28;
+    if(j<2||j>h-3)light=0.02;
+    if(light<0)light=0;if(light>1)light=1;
+    const col=rgb[IV.art.toneIndex(ramp.length,light,i,top+j)],p=(j*W+i)*4;
+    pix[p]=col[0];pix[p+1]=col[1];pix[p+2]=col[2];pix[p+3]=255;
+   }
   }
-  ctx.fillStyle=skin.deep;ctx.fillRect(0,top,W,2);
-  for(let x=0;x<W;x++){const wave=Math.sin(x*0.16+t*1.4)*2|0,yy=bot+wave;
-   ctx.fillStyle=skin.gum;ctx.fillRect(x,yy-1,1,2);ctx.fillStyle=skin.edge;ctx.fillRect(x,yy+1,1,1);}
+  g.putImageData(img,0,0);ctx.drawImage(c,0,top);
+  for(let x=0;x<W;x++){const wave=(x>>2)&1,yy=bot+wave;
+   ctx.fillStyle=skin.gum;ctx.fillRect(x,yy,1,2);ctx.fillStyle=skin.edge;ctx.fillRect(x,yy+2,1,1);}
   const gapL=e.x-20,gapR=e.x+20;
   for(let x=6;x<W-6;x+=8){if(x>gapL&&x<gapR)continue;
-   const yy=bot+(Math.sin(x*0.16+t*1.4)*2|0)+2,th=4+(x%3);
+   const yy=bot+((x>>2)&1)+2,th=4+(x%3);
    ctx.fillStyle=skin.edge;ctx.fillRect(x-1,yy,4,th+1);ctx.fillStyle=skin.tooth;ctx.fillRect(x,yy,2,th);}
-  ctx.fillStyle=skin.vein;
+  ctx.fillStyle=skin.flesh;
   for(let i=0;i<5;i++){const x=18+i*34;if(Math.abs(x-e.x)<22)continue;ctx.fillRect(x,bot+6,1,3+(i%3));}
  }
  function drawMouth(ctx,x,y,jaw,skin,form){
   const w=17,h=(5+jaw*16)|0,top=(y-1)|0;
   ctx.fillStyle=skin.edge;ctx.fillRect(x-w-2,top-2,w*2+4,h+7);
-  ctx.fillStyle=form>=5?'#3a080c':skin.mouth;ctx.fillRect(x-w,top,w*2,h+3);
-  if(jaw>0.35){ctx.fillStyle=form>=5?'#ff5a32':'#6a1020';ctx.fillRect(x-5,top+3,10,Math.max(2,h-4));
-   if(form>=5){ctx.fillStyle='#ffd0a0';ctx.fillRect(x-1,top+4,2,2);}}
+  ctx.fillStyle=form>=5?skin.deep:skin.mouth;ctx.fillRect(x-w,top,w*2,h+3);
+  if(jaw>0.35){ctx.fillStyle='#ff4d5e';ctx.fillRect(x-5,top+3,10,Math.max(2,h-4));
+   if(form>=5){ctx.fillStyle='#ffffff';ctx.fillRect(x-1,top+4,2,2);}}
   ctx.fillStyle=skin.tooth;
   for(let i=-3;i<=3;i++){ctx.fillRect(x+i*5-1,top,2,3+(i&1?1:0));ctx.fillRect(x+i*5,top+h,2,3+(i&1?0:1));}
   ctx.fillStyle=skin.gum;ctx.fillRect(x-w,top+h+3,w*2,2);
  }
  function drawEye(ctx,x,y,open,dead,t,skin){
-  const rx=8,ry=dead?5:Math.max(3,(3+open*8)|0);
-  for(let j=-ry-1;j<=ry+1;j++){const s=Math.round((rx+1)*Math.sqrt(Math.max(0,1-(j/(ry+1))*(j/(ry+1)))));
-   ctx.fillStyle=skin.edge;ctx.fillRect((x-s)|0,(y+j)|0,s*2+1,1);}
-  for(let j=-ry;j<=ry;j++){const s=Math.max(1,Math.round(rx*Math.sqrt(Math.max(0,1-(j/ry)*(j/ry)))));
-   ctx.fillStyle=dead?skin.deep:(open>0.35?'#f0d4cc':'#a05860');ctx.fillRect((x-s)|0,(y+j)|0,s*2+1,1);
-   if(!dead&&open>0.35&&j%3===0){ctx.fillStyle='#c02838';ctx.fillRect((x-s+1)|0,(y+j)|0,Math.max(1,s-1),1);}}
-  if(dead){ctx.fillStyle='#4a0810';ctx.fillRect((x-2)|0,(y-ry+1)|0,4,ry);return;}
-  if(open>0.4){const py=(y+Math.sin(t*2)|0);
-   ctx.fillStyle='#1a0608';ctx.fillRect(x-2,py-3,5,7);ctx.fillStyle='#ff4048';ctx.fillRect(x-1,py-2,3,4);ctx.fillStyle='#fff0e0';ctx.fillRect(x,py-1,1,1);
-  }else{ctx.fillStyle=skin.edge;ctx.fillRect(x-1,(y-ry+2)|0,2,ry*2-3);}
+  const rx=8,ry=dead?4:Math.max(3,(3+open*8)|0);
+  fillOval(ctx,x,y,rx+1,ry+1,skin.edge);
+  fillOval(ctx,x,y,rx,ry,dead?skin.deep:'#c9b79c');
+  if(dead){ctx.fillStyle=skin.edge;ctx.fillRect(x-4,y,9,1);ctx.fillRect(x,y-3,1,7);return;}
+  if(open>0.4){
+   const ih=Math.max(2,ry>>1);
+   ctx.fillStyle='#ff4d5e';ctx.fillRect(x-3,y-ih,7,ih*2+1);
+   ctx.fillStyle=skin.edge;ctx.fillRect(x-1,y-ih+1,3,ih*2-1);
+   ctx.fillStyle='#ffffff';ctx.fillRect(x-2,y-ih+1,1,1);
+  }else{ctx.fillStyle=skin.edge;ctx.fillRect(x-rx+3,y,rx*2-5,1);}
  }
  function advance(e,dt,A){
   if(!e.breaking){e.breaking=1;e.breakT=0.55;A.G.shake=Math.max(A.G.shake,8);}
@@ -326,7 +338,7 @@ IV.content.bosses.push(
  }
  IV.content.bosses.push({
   id:'maw',name:'THE MAW',tier:'mega',fromWave:91,phases:5,unlock:{wave:90,sector:10},hp:8,body:0,escorts:false,phaseLock:true,
-  half:['...vvvvvvv','..veeeeeev','.veeeeweev','veelllleev','vellwwwlev','veelllleev','.veeeeeeev','..vpppppev','...ppppppv','....pppp..','.....pp...','......p...'],
+  half:['....vvkkkk','...vkkkkkk','..vkkkvvkk','.vkkkvvkkk','vkkkvvvkkk','vkkkvkkkkk','vkkkvvvkkk','.vkkkvvkkk','..vkkkkkkk','...vkkkkkk','....vvkkkk','.....vvkk.'],
   setup(e,A){
    const f=e.form=e.form||1;
    e.T={hp:14,rew:18,spd:f>=4?22:14,fire:0,dmg:1.4,shots:0,ai:'boss'};
@@ -338,7 +350,7 @@ IV.content.bosses.push(
    else if(f!==3)syncLimbs(e);
   },
   update(e,dt,A){
-   const t=A.G.t,f=e.form||1,skin=SKIN[f-1]||SKIN[0];
+   const t=A.G.t,f=e.form||1,skin=PHASE[f-1]||PHASE[0];
    const base=f>=4?52:36;
    e.tx=A.W/2+Math.sin(t*0.22)*4;e.ty=base+Math.sin(t*0.55)*(f>=4?6:4);
    e.jaw=f>=5?0.92:(0.2+0.16*Math.sin(t*1.7));
@@ -365,7 +377,7 @@ IV.content.bosses.push(
    else{e.bodyMult=0;syncLimbs(e);}
   },
   draw(e,A,ctx){
-   const f=e.form||1,skin=SKIN[f-1]||SKIN[0],t=A.G.t;
+   const f=e.form||1,skin=PHASE[f-1]||PHASE[0],t=A.G.t;
    const openEye=f===3?1:f>=5?0.9:f===4?0.72:0.62;
    drawWall(ctx,e,skin,t);
    const order=(e.limbs||[]).slice().sort((a,b)=>a.z-b.z);
@@ -374,7 +386,7 @@ IV.content.bosses.push(
     if(L.hp<=0){
      if(slot.restJ){const stump=worldJoints(e,slot.restJ.slice(0,4));
       tube(ctx,stump,radiiFor(3),skin,{flash:0,flashSi:-1,ratio:1,alpha:1});
-      disc(ctx,stump[stump.length-1].x,stump[stump.length-1].y,thick(2,L.n),skin.deep);}
+      IV.art.disc(ctx,stump[stump.length-1].x,stump[stump.length-1].y,thick(2,L.n),skin.hurt);}
      const fall=L.fall;if(fall&&fall.life>0){const c=Math.cos(fall.ang),s=Math.sin(fall.ang),pts=[],radii=[];
       for(const p of fall.pts){pts.push({x:e.x+fall.x+p.x*c-p.y*s,y:e.y+fall.y+p.x*s+p.y*c});radii.push(p.r);}
       const al=Math.max(0,Math.min(1,fall.life/0.4));
@@ -383,19 +395,19 @@ IV.content.bosses.push(
      continue;
     }
     if(!L.joints)continue;
-    disc(ctx,e.x+L.bx,e.y+L.by,ROOT+1,skin.sock);
+    IV.art.disc(ctx,e.x+L.bx,e.y+L.by,ROOT+1,skin.ramp);
     const pts=worldJoints(e,L.joints),ratio=L.maxHp?L.hp/L.maxHp:1;
     tube(ctx,pts,radiiFor(L.n),skin,{flash:L.flash,flashSi:L.flashSi|0,ratio,alpha:1});
     drawHungry(ctx,pts,skin,t,L.arm);
     const bx=(e.x+L.bx)|0,by=(e.y+L.by-6)|0;
-    ctx.fillStyle='#05060c';ctx.fillRect(bx-6,by,12,2);ctx.fillStyle='#ffb0b8';ctx.fillRect(bx-5,by,Math.round(10*Math.max(0,ratio)),2);
+    ctx.fillStyle='#0b0f1e';ctx.fillRect(bx-6,by,12,2);ctx.fillStyle='#ff4d5e';ctx.fillRect(bx-5,by,Math.round(10*Math.max(0,ratio)),2);
    }
    drawMouth(ctx,e.x|0,(e.y+8)|0,e.jaw||0,skin,f);
    for(const p of e.parts||[])if(p.kind==='eye'){
     drawEye(ctx,(e.x+p.ox)|0,(e.y+p.oy)|0,p.hp>0?openEye:0,!(p.hp>0),t,skin);
-    if(p.hp>0){const bx=(e.x+p.ox)|0,by=(e.y+p.oy+12)|0;ctx.fillStyle='#05060c';ctx.fillRect(bx-6,by,12,2);
-     ctx.fillStyle='#ffb0b8';ctx.fillRect(bx-5,by,Math.round(10*p.hp/p.maxHp),2);}
-    if(f===3&&p.hp>0){ctx.fillStyle=(t*16|0)%2?'#fff6c2':'#ff4d5e';
+    if(p.hp>0){const bx=(e.x+p.ox)|0,by=(e.y+p.oy+12)|0;ctx.fillStyle='#0b0f1e';ctx.fillRect(bx-6,by,12,2);
+     ctx.fillStyle='#ff4d5e';ctx.fillRect(bx-5,by,Math.round(10*p.hp/p.maxHp),2);}
+    if(f===3&&p.hp>0){ctx.fillStyle=(t*16|0)%2?'#ffffff':'#ff4d5e';
      for(let d=10;d<230;d+=3)ctx.fillRect((e.x+p.ox+Math.cos(p.laser)*d)|0,(e.y+p.oy+Math.sin(p.laser)*d)|0,2,2);}
    }
    if(f!==3){drawEye(ctx,(e.x-46)|0,(e.y-2)|0,openEye,false,t,skin);drawEye(ctx,(e.x+46)|0,(e.y-2)|0,openEye,false,t,skin);}
