@@ -29,7 +29,7 @@ Every content entry has an `unlock` object. Its keys are ANDed (see `src/core.js
 | wave 2-10 | Rapid Cycler (2), Dual Fighter and Fighters (3), Divers (4), Targeting AI (4), Nano Repair and Invader grid and first boss Dreadnought (5), Spread Gun and Spread Array (6), Kamikazes (7), Escort Drones (8), Homing Missiles and Cruisers (9), Deflector and Boss Galaga (10) |
 | sector 2 (wave 11-20) | Nebula Drift. Secondary gun slot and Shielded Guards (12), Laser (13), Rocks (14), Mothership (15), Snipers (16), Ring Laser (17), Big Core (20) |
 | wave 20 | **Warp Jump** available (run-based: clear wave 20 this run) |
-| sector 3+ | Verdant Belt (21) and its nebula clouds, Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Option Pods (26), Solar Forge (31), The Deep (41) |
+| sector 3+ | Verdant Belt (21) and its nebula clouds, Wave Cannon (21), Cloakers (22), Mine Layers (24), Xeno Biomech (25), Option Pods (26), Splitters (27), Solar Forge (31), The Deep (41) |
 | warps 1 | Dark Matter upgrades (Overcharge, Quantum Salvage, Nanohull, Chrono Core, Warp Drive, Auto-Foundry) |
 | sector 10 (wave 91) | THE MAW, a mega boss on waves 91-95. The run continues at wave 96. Eidolon appears in SAVE/STATS once best wave reaches sector 10, and can be equipped only after the kill |
 | future | Missions, more skins (R13), sector modifiers, meta threats (wave 100 and deeper), and the rest of the [roadmap](ROADMAP.md). Use warps/bosses/dmTotal gates for meta systems so they appear after the first prestige |
@@ -62,6 +62,11 @@ Sector `verdant-belt` sets `clouds:{a,b,h}` in that sector's greens (`#0d2a1c`, 
 
 The gate is the sector unlock, checked against the current wave, and only this picture sets `clouds`. Outer Rim and Nebula Drift never draw them, including after a Warp Jump back to wave 1. When the five pictures cycle, sector 8 uses Verdant Belt again and the nebula returns. Solar Forge and The Deep do not.
 
+### Splitter
+From the current wave 27, every non-boss wave starts with one `splitter`, and the spawn pool can add another (weight 0.35). It is a 15×14 pyramid, taller than the 11×9 fighter, drawn unmirrored. Three facets share a black rim and an orange seam. Each face has its own ramp, shaded with `IV.art.litUL` and `IV.art.tone`: the left face dithers the sector hull and highlight, the center face is mid steel and gray with a yellow core, and the right face is navy and dark metal. A white speck sits on the upper left and the nose is yellow. It roams, does not bob, and fires one slow shot (hp 1.5, reward 1.45, speed 28, fire 0.35, damage 0.65). The first one to spawn in a page load toasts `NEW THREAT: SPLITTERS`. It has no `threat` field. Wave 27 is also a mine-field wave, and `startWave` would toast a `threat` on that unlock even when no splitter has spawned. The mines suite reads the Mine Layers toast after a wave-27 `startWave`.
+
+On death, `onDeath` prints `SPLIT` and spawns three `dart` enemies on the wreck. For 0.34s each dart draws one facet. The facets fly apart and the seams flash white, then each facet becomes an arrowhead that rotates to its heading: navy outline, yellow core, orange body, orange trail, no sector colour. `dart` is weight 0, so the spawner never picks it. `counts` is false, hp 0.32, reward 0.18, ram damage 0.22×`eDmg`. While it is above the ship it steers toward the ship. Once it draws level it flies straight, so a miss leaves the screen instead of circling. It despawns offscreen or after 3.2s, with no reward. A shot or a ram pays the small reward and does not split again. If that splitter was the last kill of the wave, the clear waits until the facets have finished separating. No new save fields. A fresh save is still on scouts.
+
 ## Content registry contracts
 Each file in `src/content/` documents its fields in a header comment. Summary:
 
@@ -77,7 +82,7 @@ Each file in `src/content/` documents its fields in a header comment. Summary:
 - **features.js**: mechanic flags `{id, name, desc, unlock, announce?}`, checked in the engine with `feat(id)`.
 - **missions.js**: reserved, and the contract gets fixed by the roadmap item that implements it.
 
-The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase, kill`. `nextPhase(e)` advances a mega boss one wave and rebuilds it. `kill(e)` runs `killEnemy` once. Extend the API rather than reaching into engine internals.
+The **`A` API** (content hooks) gives `W, H, TAU, rnd, clamp, pick, fmt, G, S, ctx, eDmg, eHP, aimAt, bossFire, mkEnemy, spawnInvaderGroup, damagePlayer, addText, addPart, banner, sparks, explode, SFX, wallsAlive, tone, noise, nextPhase, kill, toast`. `nextPhase(e)` advances a mega boss one wave and rebuilds it. `kill(e)` runs `killEnemy` once. `toast` is the same line the engine uses for a new threat. Extend the API rather than reaching into engine internals.
 
 **Save compatibility:** the key is `voidbreaker_save_v1` (legacy name, never change it). New persistent state goes in `fresh()` with a default, and `migrate()` copies known fields and fills the rest. New upgrade, gun and Dark Matter ids get level 0 automatically. `S.skin`, `S.skins` and `S.finalKills` are persistent. `S.finalKills` is the lifetime count of mega-boss clears. The key name stays so old saves load. `S.megaPaid` is 1 after this run has taken a mega-boss bounty. Warp Jump, including a hull breach, clears `megaPaid` and does not clear `finalKills` or owned skins. Reset All does, because it loads `fresh()`.
 

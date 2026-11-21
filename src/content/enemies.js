@@ -89,5 +89,130 @@ IV.content.enemies.push(
    if(!e.near)return;
    const r=11+Math.sin(A.G.t*8)*1.2;ctx.fillStyle=on?'#ff4d5e':'#ff9f1c';
    for(let i=0;i<18;i++){const a=i/18*A.TAU;ctx.fillRect(Math.round(e.x+Math.cos(a)*r),Math.round(e.y+Math.sin(a)*r),1,1);}
+  }},
+ {id:'splitter',name:'SPLITTER',unlock:{wave:27},weight:0.35,hp:1.5,rew:1.45,spd:28,fire:0.35,dmg:0.65,shots:1,ai:'roam',
+  sprite:{full:Array(14).fill('...............')},
+  init(e,A){e.noBob=true;if(A.G.splitNote)return;A.G.splitNote=1;A.toast('NEW THREAT: SPLITTERS');},
+  onDeath(e,A){
+   if(e.silent)return;
+   A.addText('SPLIT',e.x,e.y-10,'#ff9f1c',true);
+   A.sparks(e.x,e.y,'#ffe066',8);
+   for(let s=0;s<3;s++){
+    const d=A.mkEnemy('dart',{counts:false,x:e.x,y:e.y});
+    d.ax=e.x;d.ay=e.y;d.seg=s;d.shard=0.34;
+   }
+  },
+  draw(e,A,ctx){ivPyPaint(ctx,e.x,e.y,A.S.wave,A.G.t,e.flash>0);}},
+ {id:'dart',name:'DART',unlock:{wave:27},weight:0,hp:0.32,rew:0.18,spd:0,fire:0,dmg:0.22,shots:0,ai:'custom',
+  sprite:{full:Array(9).fill('.........')},
+  init(e){e.counts=false;e.noBob=true;e.ang=1.57;e.sp=72;e.life=0;e.shard=0;e.seg=1;},
+  update(e,dt,A){
+   e.life+=dt;
+   if(e.shard>0){
+    e.shard-=dt;
+    ivShardPlace(e);
+    if(e.shard<=0){e.shard=0;const f=ivPyRows.fly[e.seg];e.ang=Math.atan2(f[1],f[0]||0.001);e.sp=84;}
+    return;
+   }
+   const P=A.G.p;
+   if(e.y<P.y-8){
+    const want=Math.atan2(P.y-e.y,P.x-e.x);
+    let da=((want-e.ang+Math.PI*3)%A.TAU)-Math.PI;
+    e.ang+=A.clamp(da,-3.6*dt,3.6*dt);
+   }
+   e.sp=Math.min(156,(e.sp||72)+90*dt);
+   const c=Math.cos(e.ang),s=Math.sin(e.ang);
+   e.x+=c*e.sp*dt;e.y+=s*e.sp*dt;
+   if(!A.G.dead&&!A.G.dying&&Math.abs(e.x-P.x)<6&&Math.abs(e.y-P.y)<7){
+    A.damagePlayer(A.eDmg(A.S.wave)*e.T.dmg);
+    if(!e.dead&&!A.G.dying)A.kill(e);
+    return;
+   }
+   if(e.life>3.2||e.y>A.H+16||e.y<-30||e.x<-20||e.x>A.W+20){e.silent=1;e.dead=true;}
+  },
+  draw(e,A,ctx){
+   if(e.shard>0){ivShardPaint(ctx,e,A.S.wave,A.G.t,e.flash>0);return;}
+   ivDartPaint(ctx,e.x,e.y,e.ang||1.57,e.flash>0);
   }}
 );
+function ivPyRows(){
+ if(ivPyRows.r)return ivPyRows.r;
+ const raw=[
+  '0000|11111|2222','0000|11111|2222','.000|11111|222.','.000|11111|222.',
+  '..00|11111|22..','..00|11111|22..','...0|11111|2...','...0|11111|2...',
+  '....0|111|2....','....0|111|2....','.....0|1|2.....','......111......',
+  '......111......','.......1.......'
+ ];
+ const rows=raw.map(s=>[...s].map(ch=>ch==='.'?-1:ch==='|'?3:+ch));
+ const cent=[[0,0,0],[0,0,0],[0,0,0]];
+ rows.forEach((row,j)=>row.forEach((v,i)=>{if(v>=0&&v<3){cent[v][0]+=i;cent[v][1]+=j;cent[v][2]++;}}));
+ ivPyRows.r=rows;ivPyRows.c=cent.map(c=>[c[0]/c[2],c[1]/c[2]]);
+ ivPyRows.w=15;ivPyRows.h=rows.length;
+ ivPyRows.fly=[[-16,12],[0,17],[16,12]];ivPyRows.shard=0.34;
+ return rows;
+}
+function ivPyOwn(rows,i,j,seg){
+ const v=rows[j][i];
+ if(seg==null)return v>=0;
+ if(v===seg)return true;
+ if(v!==3)return false;
+ return [[1,0],[-1,0],[0,1],[0,-1]].some(d=>{const q=rows[j+d[1]];return q&&q[i+d[0]]===seg;});
+}
+function ivPyEdge(rows,i,j){
+ const H=rows.length,W=rows[0].length;
+ if(i===0||j===0||i===W-1||j===H-1)return true;
+ return [[1,0],[-1,0],[0,1],[0,-1]].some(d=>{const q=rows[j+d[1]];return !q||q[i+d[0]]<0;});
+}
+function ivPyPaint(ctx,cx,cy,wave,t,flash,seg,crack){
+ const rows=ivPyRows(),W=ivPyRows.w,H=ivPyRows.h;
+ const x0=Math.round(cx-(W-1)/2),y0=Math.round(cy-(H-1)/2);
+ const secs=IV.content.sectors,sc=secs[Math.floor(((wave||1)-1)/10)%secs.length].scheme;
+ const ramps=[
+  ['#3b4252',sc.X,sc.Y,'#ffffff'],
+  ['#1b2b5a','#3b4252','#8a94a6','#ffffff'],
+  ['#0b0f1e','#1b2b5a','#3b4252','#8a94a6']
+ ];
+ const N=[[-0.9,-0.8],[0.05,-0.35],[0.85,0.15]];
+ const seam=(t*8|0)%2?'#ffe066':'#ff9f1c';
+ for(let j=0;j<H;j++)for(let i=0;i<W;i++){
+  if(!ivPyOwn(rows,i,j,seg))continue;
+  const v=rows[j][i];let col='#ffffff';
+  if(!flash){
+   if(v===3)col=crack?'#ffffff':seam;
+   else if(j===H-1&&i===7)col='#ffe066';
+   else if(ivPyEdge(rows,i,j))col='#0b0f1e';
+   else{
+    let light=[0.48,0.52,0.62][v]+(IV.art.litUL(N[v][0],N[v][1])-0.55)*0.22-(i/W)*0.1-(j/H)*0.14;
+    if(v===0)light=light<0.42?0.42:light>0.62?0.62:light;
+    if(v===1)light=light<0.4?0.4:light>0.62?0.62:light;
+    if(v===2)light=light<0.48?0.48:light>0.62?0.62:light;
+    col=IV.art.tone(ramps[v],light,i,j);
+    if(v===0&&i===1&&j===1)col='#ffffff';
+    if(v===1&&i===7&&j===5)col='#ffffff';
+    if(v===1&&i===7&&(j===4||j===6))col='#ffe066';
+   }
+  }
+  ctx.fillStyle=col;ctx.fillRect(x0+i,y0+j,1,1);
+ }
+}
+function ivShardPlace(e){
+ ivPyRows();
+ const k=1-Math.max(e.shard,0)/ivPyRows.shard,f=ivPyRows.fly[e.seg],c=ivPyRows.c[e.seg];
+ e.x=e.ax+f[0]*k-(ivPyRows.w-1)/2+c[0];
+ e.y=e.ay+f[1]*k-(ivPyRows.h-1)/2+c[1];
+}
+function ivShardPaint(ctx,e,wave,t,flash){
+ ivPyRows();
+ const k=1-Math.max(e.shard,0)/ivPyRows.shard,f=ivPyRows.fly[e.seg];
+ ivPyPaint(ctx,e.ax+f[0]*k,e.ay+f[1]*k,wave,t,flash,e.seg,k<0.42);
+}
+function ivDartPaint(ctx,x,y,ang,flash){
+ const c=Math.cos(ang),s=Math.sin(ang);
+ const dark=[[3,1],[3,-1],[2,2],[2,-2],[1,2],[1,-2],[0,1],[0,-1],[-1,1],[-1,-1],[-2,0]];
+ const lit=[[4,0,'#ffffff'],[3,0,'#ffe066'],[2,0,'#ffe066'],[2,1,'#ff9f1c'],[2,-1,'#ff9f1c'],[1,0,'#ff9f1c'],[1,1,'#ff9f1c'],[1,-1,'#ff9f1c'],[0,0,'#ff9f1c'],[-1,0,'#ffe066']];
+ for(const p of dark){ctx.fillStyle=flash?'#ffffff':(Math.abs(p[1])>1?'#1b2b5a':'#0b0f1e');ctx.fillRect(Math.round(x+c*p[0]-s*p[1]),Math.round(y+s*p[0]+c*p[1]),1,1);}
+ for(const p of lit){ctx.fillStyle=flash?'#ffffff':p[2];ctx.fillRect(Math.round(x+c*p[0]-s*p[1]),Math.round(y+s*p[0]+c*p[1]),1,1);}
+ if(flash)return;
+ ctx.fillStyle='#ffe066';ctx.fillRect(Math.round(x-c*3),Math.round(y-s*3),1,1);
+ ctx.fillStyle='#ff9f1c';ctx.fillRect(Math.round(x-c*5),Math.round(y-s*5),1,1);ctx.fillRect(Math.round(x-c*7),Math.round(y-s*7),1,1);
+}

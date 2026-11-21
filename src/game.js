@@ -447,7 +447,7 @@ function updateBoss(e,dt){
  if(G.captured>0){e.a3-=dt;if(e.a3<=0){e.a3=1.4;for(let i=0;i<G.captured;i++){const cx=e.x+(i%2?1:-1)*(e.w/2+6),cy=e.y-4,a=aimAt(cx,cy);pushEB(cx,cy,Math.cos(a)*80,Math.sin(a)*80,eDmg(S.wave)*0.6,'orb');}}}
 }
 /* ---------- content API: the object passed as `A` to content hooks (guns, bosses, custom enemies) ---------- */
-const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossFire,mkEnemy,spawnInvaderGroup,damagePlayer,addText,addPart,banner,sparks,explode,SFX,wallsAlive,nextPhase,
+const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossFire,mkEnemy,spawnInvaderGroup,damagePlayer,addText,addPart,banner,sparks,explode,SFX,wallsAlive,nextPhase,toast,
  kill(e){if(e&&!e.dead)killEnemy(e);},
  tone:(...a)=>{if(AC)tone(...a);},noise:(...a)=>{if(AC)noise(...a);}};
 
@@ -455,7 +455,7 @@ const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossF
 /* ---------- waves ---------- */
 function startWave(){
  for(const e of G.enemies){if(!e.dead)explode(e.x,e.y,1);e.dead=true;}
- G.enemies=[];clearEB();G.marches=[];S.waveKills=0;
+ G.enemies=[];clearEB();G.marches=[];S.waveKills=0;G.shardHold=0;G.splitLed=0;
  G.mega=isMegaWave(S.wave);G.isBoss=G.mega||S.wave%5===0;G.boss=null;
  G.need=G.isBoss?1:needOf(S.wave);G.toSpawn=G.need;G.spawnT=G.mega?0.35:1;G.bossT=G.mega?90:35;G.bossAlive=false;G.escortT=4;
  const sec=sectorOf(S.wave);if(sec!==G.sector){G.sector=sec;G.planet=makePlanet(sec);G.clouds=buildClouds(sec);}
@@ -464,6 +464,7 @@ function startWave(){
  else if(G.isBoss){banner('WARNING: '+bossFor(S.wave).name,'#ff4d5e',2.2);SFX.alarm();}
  else if(G.minePass){banner(S.wave===24?'MINE LAYERS':'MINE FIELD','#ff9f1c',1.8);const nt=C.enemies.find(t=>t.threat&&t.unlock.wave===S.wave);if(nt)setTimeout(()=>toast('NEW THREAT: '+nt.threat),400);mkEnemy('miner',{counts:false});}
  else{banner('WAVE '+S.wave,'#7fe7ff',1.3);const nt=C.enemies.find(t=>t.threat&&t.unlock.wave===S.wave);if(nt)setTimeout(()=>toast('NEW THREAT: '+nt.threat),400);}
+ if(!G.isBoss&&S.wave>=27&&G.toSpawn>0){G.splitLed=1;mkEnemy('splitter');G.toSpawn--;}
 }
 function notifyUnlocks(prev){
  const now=storeCtx(),was=g=>IV.gateOpen(g,prev),is=g=>IV.gateOpen(g,now);
@@ -610,7 +611,7 @@ function killEnemy(e){
  if(big||Math.random()<0.03)dropCap(e.x,e.y,big?2:1);
  if(e.counts){S.kills++;S.waveKills++;}
  if(big){S.bossKills++;G.bossAlive=false;releaseCaptured(true);if(e.def&&bossTier(e.def)==='mega'){finishMega();return;}waveClear();}
- else if(!G.isBoss&&e.counts&&S.waveKills>=G.need)waveClear();
+ else if(!G.isBoss&&e.counts&&S.waveKills>=G.need){if(G.enemies.some(o=>!o.dead&&o.shard>0))G.shardHold=1;else waveClear();}
 }
 /* power capsules (Gradius-style) */
 const CAPS={P:{c:'#ff9f1c',name:'OVERDRIVE'},R:{c:'#6bff8a',name:'REPAIR'},B:{c:'#ff5ccf',name:'SMART BOMB'}};
@@ -737,7 +738,7 @@ function update(dt){
    const a=G.droneA+i*TAU/nd,dx0=P.x+Math.cos(a)*17,dy0=P.y+Math.sin(a)*8-2;const pt=aimPoint(e);const ang=Math.atan2(pt.y-dy0,pt.x-dx0);
    G.pb.push({x:dx0,y:dy0,py:dy0,vx:Math.cos(ang)*180,vy:Math.sin(ang)*180,dmg:s.droneDmg,k:'drone'});}}
  // spawning
- if(!G.isBoss&&G.toSpawn>0){G.spawnT-=dt;if(G.spawnT<=0){let alive=0;for(const e of G.enemies)if(e.counts)alive++;if(alive<maxAliveOf(S.wave)){spawnWaveEnemy();G.spawnT=rnd(0.25,0.7)*Math.max(0.2,1-S.wave/70);}}}
+ if(!G.isBoss&&!G.shardHold&&G.toSpawn>0){G.spawnT-=dt;if(G.spawnT<=0){let alive=0;for(const e of G.enemies)if(e.counts)alive++;if(alive<maxAliveOf(S.wave)){spawnWaveEnemy();G.spawnT=rnd(0.25,0.7)*Math.max(0.2,1-S.wave/70);}}}
  if(G.isBoss&&G.toSpawn>0&&!G.megaHold){G.spawnT-=dt;if(G.spawnT<=0){spawnBoss(G.mega?(megaDef(S.wave)||bossFor(S.wave)):bossFor(S.wave));G.toSpawn=0;}}
  if(G.isBoss&&G.bossAlive&&!G.megaHold){G.bossT-=dt;if(G.bossT<=0){failWave(G.mega?'PHASE LOST':G.boss.name+' ESCAPED');return;}}
  // enemy fire (standard shooters)
@@ -758,6 +759,7 @@ function update(dt){
   if(gone)rmAt(G.pb,i);
  }
  G.enemies=G.enemies.filter(e=>!e.dead);
+ if(G.shardHold&&!G.enemies.some(o=>o.shard>0)){G.shardHold=0;waveClear();}
  // enemy bullets
  for(let i=G.eb.length-1;i>=0;i--){const b=G.eb[i];b.t+=dt;
   if(b.k==='zig')b.vx=Math.sin(b.t*9)*55;
