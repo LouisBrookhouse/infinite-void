@@ -3,6 +3,14 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.5.0',date:'2026-11-21',title:'SPLITTER',
+  added:[
+   'Splitters join at wave 27. Shoot the pyramid and it breaks into 3 darts that turn toward your ship.',
+  ],
+  balance:[
+   'The pyramid is a little tougher than a fighter. The darts dive through and leave. A 30 minute run still stalls at wave 44, a warp still pays +13 Dark Matter, and an idle run still reaches wave 10.',
+  ],
+  gate:'Wave 27. A fresh save never meets them. Darts only come out of a splitter.'},
  {version:'1.4.2',date:'2026-11-20',title:'SAME HAND',
   fixed:[
    'Mine Layers, mines, Option Pods, Big Core shields, Xeno plates, and THE MAW are painted with the same pixels as the scouts and the ship. Mines are small dark orbs. THE MAW is a dark wall of flesh.',

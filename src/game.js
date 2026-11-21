@@ -447,7 +447,7 @@ function updateBoss(e,dt){
  if(G.captured>0){e.a3-=dt;if(e.a3<=0){e.a3=1.4;for(let i=0;i<G.captured;i++){const cx=e.x+(i%2?1:-1)*(e.w/2+6),cy=e.y-4,a=aimAt(cx,cy);pushEB(cx,cy,Math.cos(a)*80,Math.sin(a)*80,eDmg(S.wave)*0.6,'orb');}}}
 }
 /* ---------- content API: the object passed as `A` to content hooks (guns, bosses, custom enemies) ---------- */
-const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossFire,mkEnemy,spawnInvaderGroup,damagePlayer,addText,addPart,banner,sparks,explode,SFX,wallsAlive,nextPhase,
+const A={W,H,TAU,rnd,clamp,pick,fmt,G,get S(){return S},ctx,eDmg,eHP,aimAt,bossFire,mkEnemy,spawnInvaderGroup,damagePlayer,addText,addPart,banner,sparks,explode,SFX,wallsAlive,nextPhase,toast,
  kill(e){if(e&&!e.dead)killEnemy(e);},
  tone:(...a)=>{if(AC)tone(...a);},noise:(...a)=>{if(AC)noise(...a);}};
 

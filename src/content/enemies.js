@@ -89,5 +89,49 @@ IV.content.enemies.push(
    if(!e.near)return;
    const r=11+Math.sin(A.G.t*8)*1.2;ctx.fillStyle=on?'#ff4d5e':'#ff9f1c';
    for(let i=0;i<18;i++){const a=i/18*A.TAU;ctx.fillRect(Math.round(e.x+Math.cos(a)*r),Math.round(e.y+Math.sin(a)*r),1,1);}
+  }},
+ {id:'splitter',name:'SPLITTER',unlock:{wave:27},weight:1.15,hp:1.25,rew:1.35,spd:28,fire:0.35,dmg:0.65,shots:1,ai:'roam',
+  sprite:{half:["dXXXXXw",".XXXXXX","..dXXXX","...dXoo","....dXY",".....dY","......Y"]},
+  init(e,A){e.noBob=true;if(A.G.splitNote)return;A.G.splitNote=1;A.toast('NEW THREAT: SPLITTERS');},
+  onDeath(e,A){
+   if(e.silent)return;
+   A.addText('SPLIT',e.x,e.y-6,'#ff9f1c',true);
+   const P=A.G.p,base=Math.atan2(P.y-e.y,P.x-e.x);
+   for(const s of [-0.9,0,0.9]){
+    const ang=base+s;
+    const d=A.mkEnemy('dart',{counts:false,x:A.clamp(e.x+Math.cos(ang)*14,12,A.W-12),y:A.clamp(e.y+Math.sin(ang)*10,12,A.H-24)});
+    d.ang=ang;d.sp=78;
+   }
+  },
+  draw(e,A,ctx){
+   const x=Math.round(e.x),top=Math.round(e.y-e.h/2);
+   ctx.fillStyle=(A.G.t*7|0)%2?'#ffe066':'#ff9f1c';
+   for(let i=1;i<e.h-1;i++)ctx.fillRect(x,top+i,1,1);
+  }},
+ {id:'dart',name:'DART',unlock:{wave:27},weight:0,hp:0.32,rew:0.18,spd:0,fire:0,dmg:0.4,shots:0,ai:'custom',
+  sprite:{half:["....w","....Y","...dX","..dXX",".dXXo","..dXX","...dX","....X","....Y"]},
+  init(e){e.counts=false;e.noBob=true;e.ang=1.57;e.sp=72;e.life=0;},
+  update(e,dt,A){
+   e.life+=dt;
+   const P=A.G.p;
+   if(e.y<P.y-8){
+    const want=Math.atan2(P.y-e.y,P.x-e.x);
+    let da=((want-e.ang+Math.PI*3)%A.TAU)-Math.PI;
+    e.ang+=A.clamp(da,-3.6*dt,3.6*dt);
+   }
+   e.sp=Math.min(156,(e.sp||72)+90*dt);
+   const c=Math.cos(e.ang),s=Math.sin(e.ang);
+   e.x+=c*e.sp*dt;e.y+=s*e.sp*dt;
+   if(!A.G.dead&&!A.G.dying&&Math.abs(e.x-P.x)<6&&Math.abs(e.y-P.y)<7){
+    A.damagePlayer(A.eDmg(A.S.wave)*e.T.dmg);
+    if(!e.dead&&!A.G.dying)A.kill(e);
+    return;
+   }
+   if(e.life>3.2||e.y>A.H+16||e.y<-30||e.x<-20||e.x>A.W+20){e.silent=1;e.dead=true;}
+  },
+  draw(e,A,ctx){
+   const c=Math.cos(e.ang),s=Math.sin(e.ang);
+   ctx.fillStyle='#ffe066';ctx.fillRect(Math.round(e.x-c*3),Math.round(e.y-s*3),1,1);
+   ctx.fillStyle='#ff9f1c';ctx.fillRect(Math.round(e.x-c*5),Math.round(e.y-s*5),1,1);ctx.fillRect(Math.round(e.x-c*7),Math.round(e.y-s*7),1,1);
   }}
 );
