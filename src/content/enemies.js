@@ -167,25 +167,29 @@ function ivPyPaint(ctx,cx,cy,wave,t,flash,seg,crack){
  const rows=ivPyRows(),W=ivPyRows.w,H=ivPyRows.h;
  const x0=Math.round(cx-(W-1)/2),y0=Math.round(cy-(H-1)/2);
  const secs=IV.content.sectors,sc=secs[Math.floor(((wave||1)-1)/10)%secs.length].scheme;
- const ramp=['#0b0f1e','#1b2b5a','#3b4252',sc.X];
- const N=[[-0.9,-0.8],[0.1,-0.25],[0.95,0.3]];
+ const ramps=[
+  ['#3b4252',sc.X,sc.Y,'#ffffff'],
+  ['#1b2b5a','#3b4252','#8a94a6','#ffffff'],
+  ['#0b0f1e','#1b2b5a','#3b4252','#8a94a6']
+ ];
+ const N=[[-0.9,-0.8],[0.05,-0.35],[0.85,0.15]];
  const seam=(t*8|0)%2?'#ffe066':'#ff9f1c';
  for(let j=0;j<H;j++)for(let i=0;i<W;i++){
   if(!ivPyOwn(rows,i,j,seg))continue;
   const v=rows[j][i];let col='#ffffff';
   if(!flash){
    if(v===3)col=crack?'#ffffff':seam;
+   else if(j===H-1&&i===7)col='#ffe066';
    else if(ivPyEdge(rows,i,j))col='#0b0f1e';
    else{
-    let light=IV.art.litUL(N[v][0],N[v][1])-(i/W)*0.1-(j/H)*0.12;
-    if(v===0)light=Math.max(light,0.78);
-    if(v===1)light=Math.max(light,0.5);
-    if(v===2)light=Math.max(light,0.48);
-    if(light>1)light=1;
-    col=IV.art.tone(ramp,light,i,j);
-    if(col==='#0b0f1e')col='#1b2b5a';
-    if(col===sc.X&&light>0.78&&IV.art.bayer(i,j)>0.7)col=sc.Y;
+    let light=[0.48,0.52,0.62][v]+(IV.art.litUL(N[v][0],N[v][1])-0.55)*0.22-(i/W)*0.1-(j/H)*0.14;
+    if(v===0)light=light<0.42?0.42:light>0.62?0.62:light;
+    if(v===1)light=light<0.4?0.4:light>0.62?0.62:light;
+    if(v===2)light=light<0.48?0.48:light>0.62?0.62:light;
+    col=IV.art.tone(ramps[v],light,i,j);
     if(v===0&&i===1&&j===1)col='#ffffff';
+    if(v===1&&i===7&&j===5)col='#ffffff';
+    if(v===1&&i===7&&(j===4||j===6))col='#ffe066';
    }
   }
   ctx.fillStyle=col;ctx.fillRect(x0+i,y0+j,1,1);
