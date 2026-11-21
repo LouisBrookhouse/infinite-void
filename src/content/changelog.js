@@ -3,6 +3,15 @@
  * e.g. 1.4.0 -> 1.5.0; use a patch bump for fix-only changes). Keep text short and player-facing.
  * Fields: version (semver), date (YYYY-MM-DD, UTC), title, added[], balance[], fixed[] (optional), gate (text, optional). */
 IV.content.changelog.push(
+ {version:'1.5.1',date:'2026-11-21',title:'SPLITTER POLISH',
+  fixed:[
+   'Splitter pieces cannot be shot while they are still pulling apart. They become targets once they turn into darts.',
+   'The pyramid is flat colour bands now. The centre face takes the sector colour, so it matches the other ships.',
+  ],
+  balance:[
+   'No number changes. A 30 minute run still stalls at wave 44, the lane stays full, a warp still pays +13 Dark Matter, and an idle run still reaches wave 10.',
+  ],
+  gate:'Wave 27, same as the splitter. A fresh save still never meets them.'},
  {version:'1.5.0',date:'2026-11-21',title:'SPLITTER',
   added:[
    'Splitters join at wave 27. The pyramid cracks along its seams, and the three pieces fly apart as arrowhead darts.',

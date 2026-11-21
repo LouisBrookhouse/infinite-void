@@ -167,12 +167,6 @@ function ivPyPaint(ctx,cx,cy,wave,t,flash,seg,crack){
  const rows=ivPyRows(),W=ivPyRows.w,H=ivPyRows.h;
  const x0=Math.round(cx-(W-1)/2),y0=Math.round(cy-(H-1)/2);
  const secs=IV.content.sectors,sc=secs[Math.floor(((wave||1)-1)/10)%secs.length].scheme;
- const ramps=[
-  ['#3b4252',sc.X,sc.Y,'#ffffff'],
-  ['#1b2b5a','#3b4252','#8a94a6','#ffffff'],
-  ['#0b0f1e','#1b2b5a','#3b4252','#8a94a6']
- ];
- const N=[[-0.9,-0.8],[0.05,-0.35],[0.85,0.15]];
  const seam=(t*8|0)%2?'#ffe066':'#ff9f1c';
  for(let j=0;j<H;j++)for(let i=0;i<W;i++){
   if(!ivPyOwn(rows,i,j,seg))continue;
@@ -182,11 +176,7 @@ function ivPyPaint(ctx,cx,cy,wave,t,flash,seg,crack){
    else if(j===H-1&&i===7)col='#ffe066';
    else if(ivPyEdge(rows,i,j))col='#0b0f1e';
    else{
-    let light=[0.48,0.52,0.62][v]+(IV.art.litUL(N[v][0],N[v][1])-0.55)*0.22-(i/W)*0.1-(j/H)*0.14;
-    if(v===0)light=light<0.42?0.42:light>0.62?0.62:light;
-    if(v===1)light=light<0.4?0.4:light>0.62?0.62:light;
-    if(v===2)light=light<0.48?0.48:light>0.62?0.62:light;
-    col=IV.art.tone(ramps[v],light,i,j);
+    col=ivPyBand(v,j,sc);
     if(v===0&&i===1&&j===1)col='#ffffff';
     if(v===1&&i===7&&j===5)col='#ffffff';
     if(v===1&&i===7&&(j===4||j===6))col='#ffe066';
@@ -194,6 +184,11 @@ function ivPyPaint(ctx,cx,cy,wave,t,flash,seg,crack){
   }
   ctx.fillStyle=col;ctx.fillRect(x0+i,y0+j,1,1);
  }
+}
+function ivPyBand(v,j,sc){
+ if(v===0)return j<=4?sc.Y:j<=6?sc.X:'#3b4252';
+ if(v===1)return j<=3?sc.Y:j<=7?sc.X:j<=9?'#8a94a6':'#3b4252';
+ return j<=3?'#3b4252':j<=7?'#1b2b5a':'#0b0f1e';
 }
 function ivShardPlace(e){
  ivPyRows();
