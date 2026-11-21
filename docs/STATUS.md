@@ -1,18 +1,18 @@
 # Status
 
-_Last updated: 2026-11-21 (v1.5.0 Splitter on `daily/2026-11-21-splitter`, v1.4.2 on main at `1fe8ea5`)_
+_Last updated: 2026-11-21 (v1.5.1 Splitter polish on `fix/2026-11-21-splitter-polish`, v1.5.0 on main at `7ee1fe8`)_
 
 ## Version state
-- **Implemented:** 1.5.0 on `daily/2026-11-21-splitter`. Splitter is a 15×14 three-facet pyramid, taller than a fighter. Every non-boss wave from 27 starts with one, and the pool can add another (weight 0.35, hp 1.5). Killing it cracks the seams and the three facets fly apart, then become arrowhead darts (hp 0.32, ram 0.22×`eDmg`). The darts steer while they are above the ship, then fly straight off the screen. No new save fields. 1.4.2's paint, the classic Big Core and Xeno layout, and the wave-125 health cap are unchanged.
-- **Tested:** `npm test` on this branch. See [sessions/2026-11-21-splitter.md](sessions/2026-11-21-splitter.md).
-- **Merged:** 1.4.2 is on `main` (PR #15, `1fe8ea5`). This session does not open a PR.
-- **Live:** 1.4.2 until a merge and the deploy job finish.
+- **Implemented:** 1.5.1 on `fix/2026-11-21-splitter-polish`. Separating facets (`shard > 0`) are not targets, and player shots pass through them. Once they are arrowheads they can be hit. The pyramid is flat bands: sector light on the upper left, a sector-tinted centre, a navy shadow on the right, orange seams, no Bayer dither. No new content and no number changes. The 1.5.0 spawn, the classic Big Core and Xeno layout, and the wave-125 health cap are unchanged.
+- **Tested:** `npm test` on this branch. See [sessions/2026-11-21-splitter-polish.md](sessions/2026-11-21-splitter-polish.md).
+- **Merged:** 1.5.0 is on `main` (PR #16, `7ee1fe8`). This session does not open a PR.
+- **Live:** 1.5.0 until a merge and the deploy job finish.
 
 ## Live
-- **Version on main:** 1.4.2. This branch prepends 1.5.0 in `src/content/changelog.js`.
+- **Version on main:** 1.5.0. This branch prepends 1.5.1 in `src/content/changelog.js`.
 - **URL:** https://louisbrookhouse.github.io/infinite-void/ (deployed by `.github/workflows/ci.yml` on push to `main`).
 - **Live-verified 2026-11-17:** v1.0.0 returned HTTP 200 with zero console errors in headless Chrome, and gameplay rendered (CI run 44069366381: test and deploy green, deploy live-check passed). Later versions follow the same deploy job.
-- **Content on main:** 7 guns, 12 enemy types, 6 bosses, 12 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. This branch adds `splitter` and `dart` (14 enemy types). It does not add a gun, boss, or upgrade.
+- **Content on main:** 7 guns, 14 enemy types (including `splitter` and `dart`), 6 bosses, 12 ship upgrades, 6 Dark Matter upgrades, 5 sectors, 2 skins, 1 feature flag (secondary slot), 0 missions. This branch does not add a gun, enemy, boss, or upgrade.
 
 ## Automation
 - CI (`test` job): docs/session-note/policy validator, unit tests, Playwright suites (smoke, save, migration, gating, balance guardrails, death, mega, mines, aim, latescale).
@@ -30,16 +30,17 @@ _Last updated: 2026-11-21 (v1.5.0 Splitter on `daily/2026-11-21-splitter`, v1.4.
 - Engine is still one file (`src/game.js`, about 1020 lines). Split it only when a feature needs it, and never as a daily item.
 - The missions registry is reserved but unimplemented (roadmap R11).
 - Sector art still has five pictures, so sector 10 reuses THE DEEP. The HUD still says SECTOR 10.
-- The balance sim stalls around wave 44, so it never fights THE MAW or the health cap. Phase HP is set against `eHP(wave)` and a 90s clock. See DESIGN.md. Mine HP is 0.16× the wave baseline. A field is every 3rd non-boss wave from 24, with a second line from wave 36, a cap of 24, and a 13.5s life. The 30 minute sim has 0 deaths and a warp pays +13 Dark Matter. On 2026-11-21, before Splitter: min5 wave 20 / onScreen 11.133 / TTK 1.052s, min15 wave 34 / 18.867 / 1.735s, min30 wave 44 / 13.9 / 2.829s, idle best 10, warp +13 Dark Matter. After the review (one splitter per non-boss wave from 27, weight 0.35, pyramid hp 1.5, dart ram 0.22×`eDmg`): min5 wave 20 / 11.133 / 1.052s, min15 wave 34 / 19.4 / 1.569s, min30 wave 44 / 18.633 / 2.688s, idle best 10, warp +13, 0 deaths. A pass that guaranteed the splitter at ram 0.4 killed the run at minute 14. An earlier pass that let the darts orbit, at weight 1.4, put min30 on-screen at 11.667, under the floor of 12. Option Pods are bought around wave 30. The v1.0.0 idle baseline was also wave 10.
+- The balance sim stalls around wave 44, so it never fights THE MAW or the health cap. Phase HP is set against `eHP(wave)` and a 90s clock. See DESIGN.md. Mine HP is 0.16× the wave baseline. A field is every 3rd non-boss wave from 24, with a second line from wave 36, a cap of 24, and a 13.5s life. The 30 minute sim has 0 deaths and a warp pays +13 Dark Matter. On 2026-11-21, before Splitter: min5 wave 20 / onScreen 11.133 / TTK 1.052s, min15 wave 34 / 18.867 / 1.735s, min30 wave 44 / 13.9 / 2.829s, idle best 10, warp +13 Dark Matter. After the review (one splitter per non-boss wave from 27, weight 0.35, pyramid hp 1.5, dart ram 0.22×`eDmg`): min5 wave 20 / 11.133 / 1.052s, min15 wave 34 / 19.4 / 1.569s, min30 wave 44 / 18.633 / 2.688s, idle best 10, warp +13, 0 deaths. A pass that guaranteed the splitter at ram 0.4 killed the run at minute 14. An earlier pass that let the darts orbit, at weight 1.4, put min30 on-screen at 11.667, under the floor of 12. v1.5.1 changes no knobs. The facets staying up for the 0.34s split measured: min5 wave 20 / 11.133 / 1.052s, min15 wave 35 / 17.067 / 1.748s, min30 wave 44 / 17.933 / 2.703s, idle best 10, warp +13, 0 deaths. Minute-30 density stays above 12. Option Pods are bought around wave 30. The v1.0.0 idle baseline was also wave 10.
 - The game has no final boss and no end state. Boss tiers are `standard`, `elite`, `mega`, and `meta`, and the list stays open. Waves continue past 95 and sectors continue past 10. Future days can add bosses of any tier, including more mega bosses and meta threats.
-- **Meta threats are not implemented.** The play rect, the outside layer, and the spawn roll are a design contract in DESIGN.md. R04 Black Hole and R35 Rect Breaker are the first two roadmap items. They are wild-card days (about one in ten, never two in a row), not the next normal update. A normal day skips a `[meta threat]` item. 1.5.0 is not a meta threat. The previous shipped update (1.4.2) was not one either.
+- **Meta threats are not implemented.** The play rect, the outside layer, and the spawn roll are a design contract in DESIGN.md. R04 Black Hole and R35 Rect Breaker are the first two roadmap items. They are wild-card days (about one in ten, never two in a row), not the next normal update. A normal day skips a `[meta threat]` item. 1.5.1 is not a meta threat. The previous shipped update (1.5.0) was not one either.
+- **Splitter facets are not targets while they separate.** `shard > 0` fails `targetable` and `findHit`, and `dmgEnemy` returns. Boss-first targeting is unchanged: a boss still wins, and only an enemy on the hull pulls aim off it. The pyramid paint is `ivPyBand` in `src/content/enemies.js`, flat rows, not `IV.art.tone`. Do not put Bayer dither back on a character-size sprite.
 - **Do not set `threat` on an enemy whose unlock wave is 27.** Wave 27 is a mine-field wave. `startWave` toasts `threat` for that unlock wave even when the enemy has not spawned, and the mines suite then expects the toast to still say MINE LAYERS. Splitter toasts from its `init` the first time one actually spawns (`A.toast`). See DESIGN.md, "Splitter".
-- **`tests/run.js` latescale checks `VERSION >= 1.2.3`.** Read on 2026-11-20. A changelog bump does not need a test edit. This branch does edit the layout assertions in that suite, and nothing else under `tests/`.
+- **`tests/run.js` latescale checks `VERSION >= 1.2.3`.** Read on 2026-11-20. A changelog bump does not need a test edit. 1.4.2 edited the layout assertions in that suite. 1.5.1 does not touch `tests/`.
 - A hull breach on any wave, including a mega boss, is an emergency Warp Jump. It pays the same Dark Matter as the button (`dmGain()`, which is 0 before wave 20) and never the Maw bounty. A zero payout does not increment `S.warps`. The Maw phase timer still restarts the current phase. A boss that escapes outside a mega boss still drops one wave.
 - Clearing THE MAW grants Eidolon once and a Dark Matter plus credit bounty once per run (`S.megaPaid`), then the run continues. It does not warp.
 - `?mega=1` is a dev jump to wave 91. `?final=1` is the same jump. Either sets `noSave`. `?kit=1` with either also sets `G.debugMul`. Real runs leave `debugMul` at 1.
 
 ## Next actions
 1. Daily agent: roadmap **R05** Afterburner (wave 28, credits). R04 Black Hole is a meta threat and is not next. New art follows DESIGN.md, "Art style guide".
-2. Owner: this branch does not open a PR. `daily/2026-11-21-splitter` is 1.5.0.
+2. Owner: this branch does not open a PR. `fix/2026-11-21-splitter-polish` is 1.5.1.
 3. Owner (optional): decide on branch protection (see above).

@@ -556,12 +556,12 @@ function shootGun(id,sec){
  SFX.gun(id);
 }
 function gunInterval(id,sec){return 1/(G.s.rate*WMAP[id].rm*(G.overT>0?2:1)*(sec?0.5:1));}
-function targetable(e){return !e.dead&&e.cloak<0.6&&e.y>-2;}
+function targetable(e){return !e.dead&&!(e.shard>0)&&e.cloak<0.6&&e.y>-2;}
 
 /* ---------- hits ---------- */
 function rectHit(b,cx,cy,hw,hh){const m=b.r||0,y0=Math.min(b.y,b.py),y1=Math.max(b.y,b.py);return Math.abs(b.x-cx)<=hw+m&&y1>=cy-hh-m&&y0<=cy+hh+m;}
 function findHit(e,b){
- if(e.dead||e.cloak>0.6)return null;
+ if(e.dead||e.shard>0||e.cloak>0.6)return null;
  if(e.parts)for(const p of e.parts){if(p.kind==='wall'&&p.hp<=0)continue;if(p.kind==='limb'){const L=e.limbs&&e.limbs[p.li];if(!L||L.hp<=0)continue;}if(p.kind==='eye'&&!(p.hp>0))continue;if(rectHit(b,e.x+p.ox,e.y+p.oy,p.w/2,p.h/2))return p;}
  if(rectHit(b,e.x,e.y,e.w/2,e.h/2))return 'body';
  return null;
@@ -586,7 +586,7 @@ function applyHit(e,where,dmg,canCrit,hx,hy){
  dmgEnemy(e,dmg*p.mult,crit,'weak');return 'hit';
 }
 function dmgEnemy(e,dmg,crit,tag){
- if(e.dead)return;if(G.debugMul>1)dmg*=G.debugMul;
+ if(e.dead||e.shard>0)return;if(G.debugMul>1)dmg*=G.debugMul;
  let col=crit?'#ffe066':tag==='weak'?'#ff9f1c':tag==='armor'?'#7383bb':'#ffffff';
  if(e.sh>0){e.sh-=dmg;col='#7fe7ff';if(e.sh<=0){e.sh=0;sparks(e.x,e.y,'#7fe7ff',12);addText('SHIELD DOWN',e.x,e.y-10,'#7fe7ff',true);SFX.shbreak();}}
  else e.hp-=dmg;
